@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "divineapi-indian-astrology-mcp"
+version = "1.0.0"
+description = "Official MCP server for Divine API's Indian/Vedic Astrology services — Panchang, Kundli, Matchmaking, Festivals"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Divine API", email = "admin@divineapi.com" },
+]
+keywords = [
+    "mcp", "astrology", "vedic", "kundli", "panchang", "horoscope",
+    "indian-astrology", "divineapi", "jyotish", "matchmaking",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "mcp[cli]>=1.2.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://divineapi.com"
+Documentation = "https://developers.divineapi.com/indian-api"
+Repository = "https://github.com/DivineAPI/mcp-indian-astrology"
+Support = "https://support.divineapi.com"
+
+[project.scripts]
+divineapi-indian-astrology-mcp = "divineapi_indian_astrology_mcp:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
