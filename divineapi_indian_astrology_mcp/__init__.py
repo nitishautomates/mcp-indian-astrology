@@ -1,0 +1,13 @@
+"""Divine API - Indian Astrology MCP Server."""
+
+from .server import mcp
+
+
+def main():
+    """Entry point for the MCP server (stdio mode)."""
+    mcp.run(transport="stdio")
+
+
+def main_http():
+    """Entry point for the MCP server (HTTP mode for remote deployment)."""
+    mcp.run(transport="streamable-http", host="0.0.0.0", port=8000)

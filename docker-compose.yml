@@ -1,0 +1,8 @@
+services:
+  mcp-server:
+    build: .
+    ports:
+      - "8001:8000"
+    environment:
+      - MCP_TRANSPORT=http
+    restart: unless-stopped
