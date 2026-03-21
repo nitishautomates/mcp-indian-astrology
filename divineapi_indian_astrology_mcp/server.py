@@ -20,6 +20,7 @@ import sys
 
 import httpx
 from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 # ──────────────────────────────────────────────
@@ -27,10 +28,22 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 # ──────────────────────────────────────────────
 
 _TRANSPORT = os.environ.get("MCP_TRANSPORT", "stdio")
+_MCP_HOST = os.environ.get("MCP_HOST", "mcp.divineapi.com")
+
+_transport_security = TransportSecuritySettings(
+    enable_dns_rebinding_protection=True,
+    allowed_hosts=[
+        f"{_MCP_HOST}",
+        f"{_MCP_HOST}:*",
+        "127.0.0.1:*",
+        "localhost:*",
+    ],
+) if _TRANSPORT == "http" else None
 
 mcp = FastMCP(
     "divineapi_indian_astrology_mcp",
     stateless_http=(_TRANSPORT == "http"),
+    transport_security=_transport_security,
 )
 
 # ──────────────────────────────────────────────
