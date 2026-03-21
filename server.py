@@ -72,9 +72,11 @@ def _get_credentials(ctx: Context | None = None) -> tuple[str, str]:
     auth_token = DIVINE_AUTH_TOKEN
     if ctx:
         try:
-            headers = ctx.request_context.get("headers", {}) if ctx.request_context else {}
-            api_key = headers.get("x-divine-api-key", api_key)
-            auth_token = headers.get("x-divine-auth-token", auth_token)
+            # In HTTP mode, ctx.request_context.request is a Starlette Request
+            request = getattr(ctx.request_context, "request", None)
+            if request and hasattr(request, "headers"):
+                api_key = request.headers.get("x-divine-api-key", api_key)
+                auth_token = request.headers.get("x-divine-auth-token", auth_token)
         except Exception:
             pass
     if not api_key or not auth_token:
