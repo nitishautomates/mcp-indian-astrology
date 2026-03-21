@@ -14,14 +14,29 @@ Setup:
 Documentation: https://developers.divineapi.com/indian-api
 """
 
+import base64
 import json
 import os
+import secrets
 import sys
+import time
 
 import httpx
+import jwt
+from mcp.server.auth.provider import (
+    AccessToken,
+    AuthorizationCode,
+    AuthorizationParams,
+    OAuthAuthorizationServerProvider,
+    RefreshToken,
+    TokenError,
+    construct_redirect_uri,
+)
+from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions, RevocationOptions
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
+from pydantic import AnyUrl, BaseModel, Field, ConfigDict, field_validator
 
 # ──────────────────────────────────────────────
 # Server Initialization
@@ -29,6 +44,7 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 _TRANSPORT = os.environ.get("MCP_TRANSPORT", "stdio")
 _MCP_HOST = os.environ.get("MCP_HOST", "mcp.divineapi.com")
+_JWT_SECRET = os.environ.get("MCP_JWT_SECRET", secrets.token_hex(32))
 
 _transport_security = TransportSecuritySettings(
     enable_dns_rebinding_protection=True,
@@ -40,10 +56,123 @@ _transport_security = TransportSecuritySettings(
     ],
 ) if _TRANSPORT == "http" else None
 
+
+# ──────────────────────────────────────────────
+# OAuth Provider — maps OAuth Client ID/Secret to Divine API credentials
+# ──────────────────────────────────────────────
+
+
+class DivineOAuthProvider(OAuthAuthorizationServerProvider):
+    """OAuth provider that uses Divine API Key as client_id and Auth Token as client_secret."""
+
+    def __init__(self, jwt_secret: str):
+        self._jwt_secret = jwt_secret
+        self._clients: dict[str, OAuthClientInformationFull] = {}
+        self._auth_codes: dict[str, dict] = {}
+
+    async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
+        return self._clients.get(client_id)
+
+    async def register_client(self, client_info: OAuthClientInformationFull) -> None:
+        self._clients[client_info.client_id] = client_info
+
+    async def authorize(self, client: OAuthClientInformationFull, params: AuthorizationParams) -> str:
+        # Store pending auth request, then redirect to our credentials form
+        pending_id = secrets.token_urlsafe(16)
+        self._pending_auths = getattr(self, "_pending_auths", {})
+        self._pending_auths[pending_id] = {
+            "client_id": client.client_id,
+            "code_challenge": params.code_challenge,
+            "redirect_uri": str(params.redirect_uri),
+            "redirect_uri_provided_explicitly": params.redirect_uri_provided_explicitly,
+            "scopes": params.scopes or [],
+            "state": params.state,
+        }
+        return f"/divine-login?pending={pending_id}"
+
+    async def load_authorization_code(self, client: OAuthClientInformationFull, authorization_code: str) -> AuthorizationCode | None:
+        data = self._auth_codes.get(authorization_code)
+        if not data or data["client_id"] != client.client_id:
+            return None
+        if time.time() > data["expires_at"]:
+            return None
+        return AuthorizationCode(
+            code=authorization_code,
+            scopes=data["scopes"],
+            expires_at=data["expires_at"],
+            client_id=data["client_id"],
+            code_challenge=data["code_challenge"],
+            redirect_uri=AnyUrl(data["redirect_uri"]),
+            redirect_uri_provided_explicitly=data["redirect_uri_provided_explicitly"],
+        )
+
+    async def exchange_authorization_code(self, client: OAuthClientInformationFull, authorization_code: AuthorizationCode) -> OAuthToken:
+        data = self._auth_codes.pop(authorization_code.code, None)
+        if not data:
+            raise TokenError(error="invalid_grant", error_description="Authorization code not found")
+
+        # Encode Divine API credentials (from login form) into JWT
+        payload = {
+            "divine_api_key": data.get("divine_api_key", ""),
+            "divine_auth_token": data.get("divine_auth_token", ""),
+            "exp": int(time.time()) + 86400 * 30,  # 30 days
+            "iat": int(time.time()),
+        }
+        access_token = jwt.encode(payload, self._jwt_secret, algorithm="HS256")
+
+        return OAuthToken(
+            access_token=access_token,
+            token_type="Bearer",
+            expires_in=86400 * 30,
+        )
+
+    async def load_refresh_token(self, client: OAuthClientInformationFull, refresh_token: str) -> RefreshToken | None:
+        return None
+
+    async def exchange_refresh_token(self, client: OAuthClientInformationFull, refresh_token: RefreshToken, scopes: list[str]) -> OAuthToken:
+        raise TokenError(error="unsupported_grant_type", error_description="Refresh tokens not supported")
+
+    async def load_access_token(self, token: str) -> AccessToken | None:
+        try:
+            payload = jwt.decode(token, self._jwt_secret, algorithms=["HS256"])
+            return AccessToken(
+                token=token,
+                client_id=payload["divine_api_key"],
+                scopes=[],
+                expires_at=payload.get("exp"),
+                resource=None,
+            )
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.InvalidTokenError:
+            return None
+
+    async def revoke_token(self, token: AccessToken | RefreshToken) -> None:
+        pass
+
+
+# Build auth settings for HTTP mode
+_auth_settings = None
+_auth_provider = None
+if _TRANSPORT == "http":
+    _auth_provider = DivineOAuthProvider(_JWT_SECRET)
+    _auth_settings = AuthSettings(
+        issuer_url=f"https://{_MCP_HOST}/indian",
+        resource_server_url=f"https://{_MCP_HOST}/indian",
+        client_registration_options=ClientRegistrationOptions(
+            enabled=True,
+            valid_scopes=["astrology"],
+        ),
+        revocation_options=RevocationOptions(enabled=True),
+        required_scopes=[],
+    )
+
 mcp = FastMCP(
     "divineapi_indian_astrology_mcp",
     stateless_http=(_TRANSPORT == "http"),
     transport_security=_transport_security,
+    auth=_auth_settings,
+    auth_server_provider=_auth_provider,
 )
 
 # ──────────────────────────────────────────────
@@ -67,14 +196,24 @@ if _TRANSPORT == "stdio" and (not DIVINE_API_KEY or not DIVINE_AUTH_TOKEN):
 
 
 def _get_credentials(ctx: Context | None = None) -> tuple[str, str]:
-    """Extract Divine API credentials from request headers or env vars."""
+    """Extract Divine API credentials from JWT Bearer token, request headers, or env vars."""
     api_key = DIVINE_API_KEY
     auth_token = DIVINE_AUTH_TOKEN
     if ctx:
         try:
-            # In HTTP mode, ctx.request_context.request is a Starlette Request
             request = getattr(ctx.request_context, "request", None)
             if request and hasattr(request, "headers"):
+                # Try Bearer JWT token first (OAuth flow)
+                auth_header = request.headers.get("authorization", "")
+                if auth_header.startswith("Bearer "):
+                    token = auth_header[7:]
+                    try:
+                        payload = jwt.decode(token, _JWT_SECRET, algorithms=["HS256"])
+                        api_key = payload.get("divine_api_key", api_key)
+                        auth_token = payload.get("divine_auth_token", auth_token)
+                    except Exception:
+                        pass
+                # Fall back to custom headers
                 api_key = request.headers.get("x-divine-api-key", api_key)
                 auth_token = request.headers.get("x-divine-auth-token", auth_token)
         except Exception:
@@ -1544,6 +1683,103 @@ async def divine_get_month_tithi_list(params: PanchangInput, ctx: Context) -> st
     """
     api_key, auth_token = _get_credentials(ctx)
     return await _call_divine_api("/indian-api/v1/month-tithi-list", _panchang_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
+
+
+# ──────────────────────────────────────────────
+# OAuth Login Form — /divine-login
+# ──────────────────────────────────────────────
+
+_LOGIN_HTML = """<!DOCTYPE html>
+<html>
+<head>
+    <title>Divine API - Connect Your Account</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+               background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+               min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .card { background: #fff; border-radius: 16px; padding: 40px; max-width: 420px; width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .logo { text-align: center; margin-bottom: 24px; font-size: 28px; }
+        h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 8px; text-align: center; }
+        p { color: #666; font-size: 14px; margin-bottom: 24px; text-align: center; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+        input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px;
+                font-size: 14px; margin-bottom: 16px; transition: border-color 0.2s; }
+        input:focus { outline: none; border-color: #0f3460; }
+        button { width: 100%; padding: 14px; background: #0f3460; color: #fff; border: none;
+                 border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;
+                 transition: background 0.2s; }
+        button:hover { background: #1a1a2e; }
+        .help { text-align: center; margin-top: 16px; font-size: 12px; color: #999; }
+        .help a { color: #0f3460; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">&#128302;</div>
+        <h1>Connect Divine API</h1>
+        <p>Enter your Divine API credentials to connect Indian Astrology tools to Claude.</p>
+        <form method="POST" action="/divine-login/submit">
+            <input type="hidden" name="pending" value="{pending_id}">
+            <label>API Key</label>
+            <input type="text" name="api_key" placeholder="Your Divine API Key" required>
+            <label>Auth Token</label>
+            <input type="password" name="auth_token" placeholder="Your Divine Auth Token" required>
+            <button type="submit">Connect</button>
+        </form>
+        <p class="help">Get your credentials at <a href="https://divineapi.com/api-keys" target="_blank">divineapi.com/api-keys</a></p>
+    </div>
+</body>
+</html>"""
+
+
+if _TRANSPORT == "http":
+    @mcp.custom_route("/divine-login", methods=["GET"])
+    async def divine_login_form(request):
+        from starlette.responses import HTMLResponse
+        pending_id = request.query_params.get("pending", "")
+        html = _LOGIN_HTML.replace("{pending_id}", pending_id)
+        return HTMLResponse(html)
+
+    @mcp.custom_route("/divine-login/submit", methods=["POST"])
+    async def divine_login_submit(request):
+        from starlette.responses import RedirectResponse
+        form = await request.form()
+        pending_id = form.get("pending", "")
+        api_key = form.get("api_key", "")
+        auth_token = form.get("auth_token", "")
+
+        if not _auth_provider or not hasattr(_auth_provider, "_pending_auths"):
+            from starlette.responses import HTMLResponse
+            return HTMLResponse("Error: Invalid session", status_code=400)
+
+        pending = _auth_provider._pending_auths.pop(pending_id, None)
+        if not pending:
+            from starlette.responses import HTMLResponse
+            return HTMLResponse("Error: Session expired. Please try connecting again.", status_code=400)
+
+        # Create auth code with Divine API credentials embedded
+        code = secrets.token_urlsafe(32)
+        _auth_provider._auth_codes[code] = {
+            "client_id": pending["client_id"],
+            "divine_api_key": api_key,
+            "divine_auth_token": auth_token,
+            "code_challenge": pending["code_challenge"],
+            "redirect_uri": pending["redirect_uri"],
+            "redirect_uri_provided_explicitly": pending["redirect_uri_provided_explicitly"],
+            "scopes": pending["scopes"],
+            "expires_at": time.time() + 300,
+        }
+
+        # Redirect back to Claude with the auth code
+        redirect_url = construct_redirect_uri(
+            pending["redirect_uri"],
+            code=code,
+            state=pending.get("state"),
+        )
+        return RedirectResponse(url=redirect_url, status_code=302)
 
 
 # ──────────────────────────────────────────────
