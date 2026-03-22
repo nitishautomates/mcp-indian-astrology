@@ -71,7 +71,22 @@ class DivineOAuthProvider(OAuthAuthorizationServerProvider):
         self._auth_codes: dict[str, dict] = {}
 
     async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
-        return self._clients.get(client_id)
+        # Return existing registered client
+        if client_id in self._clients:
+            return self._clients[client_id]
+        # Auto-create client for any client_id (treat as Divine API key)
+        # This allows Claude.ai users to enter their API key as OAuth Client ID
+        auto_client = OAuthClientInformationFull(
+            client_id=client_id,
+            client_secret=None,
+            redirect_uris=['https://claude.ai/oauth/callback', 'https://app.claude.ai/oauth/callback', 'https://claude.ai/api/mcp/auth_callback', 'https://app.claude.ai/api/mcp/auth_callback'],
+            grant_types=['authorization_code', 'refresh_token'],
+            response_types=['code'],
+            token_endpoint_auth_method='client_secret_post',
+            scope='astrology',
+        )
+        self._clients[client_id] = auto_client
+        return auto_client
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
         self._clients[client_info.client_id] = client_info
@@ -1720,7 +1735,7 @@ _LOGIN_HTML = """<!DOCTYPE html>
     <div class="card">
         <div class="logo">&#128302;</div>
         <h1>Connect Divine API</h1>
-        <p>Enter your Divine API credentials to connect Indian Astrology tools to Claude.</p>
+        <p>Enter your Divine API credentials to connect Divine API tools to Claude.</p>
         <form method="POST" action="/divine-login/submit">
             <input type="hidden" name="pending" value="{pending_id}">
             <label>API Key</label>
@@ -1731,6 +1746,9 @@ _LOGIN_HTML = """<!DOCTYPE html>
         </form>
         <p class="help">Get your credentials at <a href="https://divineapi.com/api-keys" target="_blank">divineapi.com/api-keys</a></p>
     </div>
+<script>
+});
+</script>
 </body>
 </html>"""
 
