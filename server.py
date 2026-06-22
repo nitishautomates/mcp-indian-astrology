@@ -265,6 +265,11 @@ VALID_PLANETS = {
     "venus", "saturn", "rahu", "ketu",
 }
 
+VALID_DASHA_TYPES = {
+    "maha-dasha", "antar-dasha", "pratyantar-dasha",
+    "sookshma-dasha", "prana-dasha", "deha-dasha",
+}
+
 TOOL_ANNOTATIONS = {
     "readOnlyHint": True,
     "destructiveHint": False,
@@ -792,14 +797,22 @@ async def divine_get_bhava_kundli(
 
 
 @mcp.tool(name="divine_get_planet_analysis", annotations=TOOL_ANNOTATIONS)
-async def divine_get_planet_analysis(params: KundliInput, ctx: Context) -> str:
-    """Get detailed analysis of all planets in the birth chart.
+async def divine_get_planet_analysis(
+    analysis_planet: str = Field(..., description="Planet to analyze: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, or ketu"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get detailed analysis of one planet in the birth chart.
 
-    Returns interpretation of each planet's placement including house lordship,
+    Returns interpretation of the selected planet's placement including house lordship,
     aspects, conjunctions, strengths, and effects.
     """
+    planet_lower = analysis_planet.lower().strip()
+    if planet_lower not in VALID_PLANETS:
+        return f"Error: Invalid analysis_planet '{analysis_planet}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/planet-analysis", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {**_kundli_payload(params), "analysis_planet": planet_lower}
+    return await _call_divine_api("/indian-api/v2/planet-analysis", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_ascendant_report", annotations=TOOL_ANNOTATIONS)
@@ -901,47 +914,97 @@ async def divine_get_sadhe_sati(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_vimshottari_dasha", annotations=TOOL_ANNOTATIONS)
-async def divine_get_vimshottari_dasha(params: KundliInput, ctx: Context) -> str:
-    """Get Vimshottari Dasha periods for a birth chart.
+async def divine_get_vimshottari_dasha(
+    dasha_type: str = Field(..., description="Granularity: 'maha-dasha', 'antar-dasha', 'pratyantar-dasha', 'sookshma-dasha', 'prana-dasha', or 'deha-dasha'"),
+    params: KundliInput = Field(..., description="Birth details"),
+    maha_dasha: str | None = Field(default=None, description="Required for 'prana-dasha' and 'deha-dasha'. Planet name (e.g., 'rahu')"),
+    antar_dasha: str | None = Field(default=None, description="Required for 'deha-dasha'. Planet name (e.g., 'moon')"),
+    ctx: Context = None,
+) -> str:
+    """Get Vimshottari Dasha periods for a birth chart at the requested granularity.
 
-    The most widely used dasha system. Returns Maha Dasha and Antar Dasha
-    periods with exact start/end dates.
+    The most widely used dasha system. Pick `dasha_type` to drill from Maha down
+    to Deha. For Prana/Deha, also specify the parent planet(s).
     """
+    dt = dasha_type.lower().strip()
+    if dt not in VALID_DASHA_TYPES:
+        return f"Error: Invalid dasha_type '{dasha_type}'. Must be one of: {', '.join(sorted(VALID_DASHA_TYPES))}"
+    if dt in ("prana-dasha", "deha-dasha") and not maha_dasha:
+        return f"Error: dasha_type '{dt}' requires maha_dasha (planet name)."
+    if dt == "deha-dasha" and not antar_dasha:
+        return "Error: dasha_type 'deha-dasha' requires both maha_dasha and antar_dasha."
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/vimshottari-dasha", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {**_kundli_payload(params), "dasha_type": dt}
+    if maha_dasha:
+        payload["maha_dasha"] = maha_dasha.lower().strip()
+    if antar_dasha:
+        payload["antar_dasha"] = antar_dasha.lower().strip()
+    return await _call_divine_api("/indian-api/v1/vimshottari-dasha", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_maha_dasha_analysis", annotations=TOOL_ANNOTATIONS)
-async def divine_get_maha_dasha_analysis(params: KundliInput, ctx: Context) -> str:
-    """Get detailed Maha Dasha analysis for a birth chart.
+async def divine_get_maha_dasha_analysis(
+    maha_dasha: str = Field(..., description="Maha Dasha planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, or ketu"),
+    lan: str = Field(default="en", description="Language code (default 'en')"),
+    ctx: Context = None,
+) -> str:
+    """Get textual interpretation of a Maha Dasha period (no birth data needed).
 
-    Returns interpretation and predictions for each Maha Dasha period
-    including effects on career, health, relationships, and finances.
+    Returns predictions for the named Maha Dasha covering career, health,
+    relationships, and finances.
     """
+    planet = maha_dasha.lower().strip()
+    if planet not in VALID_PLANETS:
+        return f"Error: Invalid maha_dasha '{maha_dasha}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/maha-dasha-analysis", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {"maha_dasha": planet, "lan": lan}
+    return await _call_divine_api("/indian-api/v1/maha-dasha-analysis", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_antar_dasha_analysis", annotations=TOOL_ANNOTATIONS)
-async def divine_get_antar_dasha_analysis(params: KundliInput, ctx: Context) -> str:
-    """Get detailed Antar Dasha (sub-period) analysis for a birth chart.
+async def divine_get_antar_dasha_analysis(
+    maha_dasha: str = Field(..., description="Maha Dasha planet (e.g., 'rahu')"),
+    antar_dasha: str = Field(..., description="Antar Dasha planet (e.g., 'moon')"),
+    lan: str = Field(default="en", description="Language code (default 'en')"),
+    ctx: Context = None,
+) -> str:
+    """Get textual interpretation of an Antar Dasha (Maha→Antar) period.
 
-    Returns interpretation for each Antar Dasha within the current
-    Maha Dasha, providing more granular timing predictions.
+    No birth data needed — this endpoint returns a generic interpretation
+    for the named Maha + Antar combination.
     """
+    m = maha_dasha.lower().strip()
+    a = antar_dasha.lower().strip()
+    if m not in VALID_PLANETS:
+        return f"Error: Invalid maha_dasha '{maha_dasha}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    if a not in VALID_PLANETS:
+        return f"Error: Invalid antar_dasha '{antar_dasha}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/antar-dasha-analysis", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {"maha_dasha": m, "antar_dasha": a, "lan": lan}
+    return await _call_divine_api("/indian-api/v1/antar-dasha-analysis", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_pratyantar_dasha_analysis", annotations=TOOL_ANNOTATIONS)
-async def divine_get_pratyantar_dasha_analysis(params: KundliInput, ctx: Context) -> str:
-    """Get Pratyantar Dasha (sub-sub-period) analysis for a birth chart.
+async def divine_get_pratyantar_dasha_analysis(
+    maha_dasha: str = Field(..., description="Maha Dasha planet (e.g., 'rahu')"),
+    antar_dasha: str = Field(..., description="Antar Dasha planet (e.g., 'moon')"),
+    pratyantar_dasha: str = Field(..., description="Pratyantar Dasha planet (e.g., 'mars')"),
+    lan: str = Field(default="en", description="Language code (default 'en')"),
+    ctx: Context = None,
+) -> str:
+    """Get textual interpretation of a Pratyantar Dasha (Maha→Antar→Pratyantar) period.
 
-    The most granular level of Vimshottari Dasha, useful for precise
-    event timing and short-term predictions.
+    No birth data needed — generic interpretation for the named three-planet combination.
     """
+    m = maha_dasha.lower().strip()
+    a = antar_dasha.lower().strip()
+    p = pratyantar_dasha.lower().strip()
+    for label, val in (("maha_dasha", m), ("antar_dasha", a), ("pratyantar_dasha", p)):
+        if val not in VALID_PLANETS:
+            return f"Error: Invalid {label} '{val}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/pratyantar-dasha-analysis", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {"maha_dasha": m, "antar_dasha": a, "pratyantar_dasha": p, "lan": lan}
+    return await _call_divine_api("/indian-api/v1/pratyantar-dasha-analysis", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_yogini_dasha", annotations=TOOL_ANNOTATIONS)
@@ -983,14 +1046,14 @@ async def divine_get_yogas(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_nav_pancham_yoga", annotations=TOOL_ANNOTATIONS)
-async def divine_get_nav_pancham_yoga(params: KundliInput, ctx: Context) -> str:
-    """Get Nav Pancham Yoga analysis for a birth chart.
+async def divine_get_nav_pancham_yoga(params: MatchmakingInput, ctx: Context) -> str:
+    """Get Nav Pancham Yoga compatibility analysis between two charts.
 
-    Analyzes the 5th and 9th house relationship (trine houses) indicating
-    fortune, past-life merit, children, and higher education.
+    Analyzes the 5th and 9th house (trine) relationship between two
+    partners, indicating fortune, mutual support, and harmony.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/nav-pancham-yoga", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/nav-pancham-yoga", _matchmaking_payload(params), api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_shadbala", annotations=TOOL_ANNOTATIONS)
@@ -1282,25 +1345,41 @@ async def divine_get_kp_planetary_positions(params: KundliInput, ctx: Context) -
 
 
 @mcp.tool(name="divine_get_kundli_transit_ascendant", annotations=TOOL_ANNOTATIONS)
-async def divine_get_kundli_transit_ascendant(params: KundliInput, ctx: Context) -> str:
-    """Get transit analysis from the Ascendant (Lagna) for a birth chart.
+async def divine_get_kundli_transit_ascendant(
+    params: KundliInput = Field(..., description="Birth details"),
+    transit_day: str = Field(..., description="Transit day (e.g., '24')"),
+    transit_month: str = Field(..., description="Transit month (e.g., '05')"),
+    transit_year: str = Field(..., description="Transit year (e.g., '2025')"),
+    ctx: Context = None,
+) -> str:
+    """Get transit analysis from the Ascendant (Lagna) on a chosen transit date.
 
-    Shows current planetary transits analyzed from the birth Ascendant,
+    Shows planetary transits on the given date analyzed from the birth Ascendant,
     indicating effects on different life areas.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/kundli-transit/ascendant", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {**_kundli_payload(params),
+               "transit_day": transit_day, "transit_month": transit_month, "transit_year": transit_year}
+    return await _call_divine_api("/indian-api/v1/kundli-transit/ascendant", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_kundli_transit_moon", annotations=TOOL_ANNOTATIONS)
-async def divine_get_kundli_transit_moon(params: KundliInput, ctx: Context) -> str:
-    """Get transit analysis from the Moon sign for a birth chart.
+async def divine_get_kundli_transit_moon(
+    params: KundliInput = Field(..., description="Birth details"),
+    transit_day: str = Field(..., description="Transit day (e.g., '24')"),
+    transit_month: str = Field(..., description="Transit month (e.g., '05')"),
+    transit_year: str = Field(..., description="Transit year (e.g., '2025')"),
+    ctx: Context = None,
+) -> str:
+    """Get transit analysis from the Moon sign on a chosen transit date.
 
-    Shows current planetary transits analyzed from the birth Moon sign,
+    Shows planetary transits on the given date analyzed from the birth Moon sign,
     the most commonly used transit reference in Vedic astrology.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/kundli-transit/moon", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {**_kundli_payload(params),
+               "transit_day": transit_day, "transit_month": transit_month, "transit_year": transit_year}
+    return await _call_divine_api("/indian-api/v1/kundli-transit/moon", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_grah_gochar", annotations=TOOL_ANNOTATIONS)
@@ -1805,6 +1884,44 @@ if _TRANSPORT == "http":
 # ──────────────────────────────────────────────
 
 
+
+
+class ApiKeyToJwtMiddleware:
+    """ASGI middleware that converts X-Divine-Api-Key/Token headers into a JWT Bearer token.
+    This allows VS Code, OpenAI, and other non-OAuth clients to authenticate."""
+
+    def __init__(self, app, jwt_secret):
+        self.app = app
+        self.jwt_secret = jwt_secret
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers_list = scope.get("headers", [])
+            headers_dict = {k: v for k, v in headers_list}
+            api_key = headers_dict.get(b"x-divine-api-key", b"").decode()
+            auth_token = headers_dict.get(b"x-divine-auth-token", b"").decode()
+            has_bearer = any(
+                v.startswith(b"Bearer ") for k, v in headers_list if k == b"authorization"
+            )
+
+            if api_key and auth_token and not has_bearer:
+                token = jwt.encode(
+                    {
+                        "divine_api_key": api_key,
+                        "divine_auth_token": auth_token,
+                        "exp": int(time.time()) + 3600,
+                        "iat": int(time.time()),
+                    },
+                    self.jwt_secret,
+                    algorithm="HS256",
+                )
+                new_headers = [(k, v) for k, v in headers_list if k != b"authorization"]
+                new_headers.append((b"authorization", f"Bearer {token}".encode()))
+                scope = dict(scope, headers=new_headers)
+
+        await self.app(scope, receive, send)
+
+
 def create_http_app():
     """Create ASGI app for production HTTP deployment with uvicorn."""
     from starlette.middleware.cors import CORSMiddleware
@@ -1824,7 +1941,7 @@ def create_http_app():
         ],
         expose_headers=["mcp-session-id"],
     )
-    return app
+    return ApiKeyToJwtMiddleware(app, _JWT_SECRET)
 
 
 # Module-level ASGI app for uvicorn (only created in HTTP mode)
