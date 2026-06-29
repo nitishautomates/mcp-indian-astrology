@@ -34,6 +34,7 @@ from mcp.server.auth.provider import (
 )
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions, RevocationOptions
 from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.fastmcp.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
 from pydantic import AnyUrl, BaseModel, Field, ConfigDict, field_validator
@@ -385,7 +386,12 @@ async def _call_divine_api(
     api_key: str | None = None,
     auth_token: str | None = None,
 ) -> str:
-    """Make a POST request to Divine API and return formatted JSON response."""
+    """Make a POST request to Divine API and return formatted JSON response.
+
+    Raises ToolError on any failure (non-2xx, network error, or an upstream
+    error envelope returned with HTTP 200) so MCP clients see isError: true
+    instead of a success result whose text merely contains 'Error: ...'.
+    """
     payload["api_key"] = api_key or DIVINE_API_KEY
     clean_payload = {k: v for k, v in payload.items() if v is not None}
     url = f"{base_url}{endpoint}"
@@ -401,16 +407,26 @@ async def _call_divine_api(
             )
             response.raise_for_status()
             data = response.json()
-            return json.dumps(data, indent=2, ensure_ascii=False)
-
     except httpx.HTTPStatusError as e:
-        return _handle_http_error(e)
-    except httpx.TimeoutException:
-        return "Error: Request timed out. The Divine API server may be slow. Please try again."
-    except httpx.ConnectError:
-        return "Error: Could not connect to Divine API. Please check your internet connection."
+        raise ToolError(_handle_http_error(e)) from e
+    except httpx.TimeoutException as e:
+        raise ToolError("Request timed out. The Divine API server may be slow. Please try again.") from e
+    except httpx.ConnectError as e:
+        raise ToolError("Could not connect to Divine API. Please check your internet connection.") from e
     except Exception as e:
-        return f"Error: Unexpected error - {type(e).__name__}: {str(e)}"
+        raise ToolError(f"Unexpected error - {type(e).__name__}: {str(e)}") from e
+
+    # Some endpoints return HTTP 200 with an error envelope in the body.
+    # Two shapes are used across the Divine API hosts:
+    #   astroapi-3 (legacy):  {"success": 3, "msg": "Invalid authorization token!"}
+    #   astroapi-8 (newer):   {"status": "error", "message": "...", ...}
+    # A successful legacy response is success==1; newer success omits "success".
+    if isinstance(data, dict):
+        if data.get("status") == "error" or ("success" in data and str(data.get("success")) != "1"):
+            msg = data.get("message") or data.get("msg") or "Divine API returned an error."
+            raise ToolError(f"Divine API error: {msg}")
+
+    return json.dumps(data, indent=2, ensure_ascii=False)
 
 
 def _handle_http_error(e: httpx.HTTPStatusError) -> str:
@@ -450,7 +466,9 @@ def _panchang_payload(params: PanchangInput) -> dict:
         "day": params.day,
         "month": params.month,
         "year": params.year,
-        "Place": params.place,
+        # Lowercase 'place': astroapi-8 (monthly lists) rejects capital 'Place'
+        # with a 422; astroapi-1/2/3 accept either. Lowercase works everywhere.
+        "place": params.place,
         "lat": params.lat,
         "lon": params.lon,
         "tzone": params.tzone,
@@ -509,7 +527,7 @@ def _matchmaking_payload(params: MatchmakingInput) -> dict:
 def _festival_payload(params: FestivalInput) -> dict:
     return {
         "year": params.year,
-        "Place": params.place,
+        "place": params.place,
         "lat": params.lat,
         "lon": params.lon,
         "tzone": params.tzone,
@@ -1664,7 +1682,7 @@ async def divine_get_english_calendar_festivals(
 
     Returns festivals falling within a given month of the Gregorian calendar.
     """
-    payload = {"month": month, "year": year, "Place": place, "lat": lat, "lon": lon, "tzone": tzone}
+    payload = {"month": month, "year": year, "place": place, "lat": lat, "lon": lon, "tzone": tzone}
     api_key, auth_token = _get_credentials(ctx)
     return await _call_divine_api("/indian-api/v1/english-calendar-festivals", payload, api_key=api_key, auth_token=auth_token)
 
@@ -1714,7 +1732,7 @@ async def divine_get_festivals_by_month(
         "kartika": "kartika-festivals",
     }
 
-    payload = {"year": year, "Place": place, "lat": lat, "lon": lon, "tzone": tzone}
+    payload = {"year": year, "place": place, "lat": lat, "lon": lon, "tzone": tzone}
     api_key, auth_token = _get_credentials(ctx)
     return await _call_divine_api(f"/indian-api/v2/{endpoint_map[month_lower]}", payload, api_key=api_key, auth_token=auth_token)
 
