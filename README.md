@@ -93,56 +93,161 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (27 Total)
+## 📋 Available Tools (79 Total)
 
-### 🗓️ Panchang (Daily Vedic Calendar) — 9 Tools
-
-| Tool | Description |
-|---|---|
-| `divine_get_panchang` | Complete daily Panchang (tithi, nakshatra, yoga, karana, timings) |
-| `divine_get_sun_moon` | Sunrise, sunset, moonrise, moonset timings |
-| `divine_get_nakshatra` | Current nakshatra details with start/end times |
-| `divine_get_tithi` | Current tithi, paksha, and deity |
-| `divine_get_auspicious_timings` | Shubh Muhurat — favorable time windows |
-| `divine_get_inauspicious_timings` | Rahu Kaal, Yamaganda, Gulika Kaal |
-| `divine_get_choghadiya` | Day/night Choghadiya time slots |
-| `divine_get_planet_transit` | Current Grah Gochar (planetary transits) |
-| `divine_get_chandrashtama` | Chandrashtama periods for all moon signs |
-
-### 🔮 Kundli (Birth Chart) — 11 Tools
+### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
 | Tool | Description |
-|---|---|
-| `divine_get_basic_astro_details` | Core birth chart data (rashi, nakshatra, tithi, etc.) |
-| `divine_get_planetary_positions` | All 9 planet positions with sign, degree, house |
-| `divine_get_horoscope_chart` | Generate Kundli chart images (D1, D9, chalit, etc.) |
-| `divine_get_vimshottari_dasha` | Maha Dasha and Antar Dasha periods |
-| `divine_get_manglik_dosha` | Manglik Dosha check with severity |
-| `divine_get_kaal_sarpa_dosha` | Kaal Sarpa Dosha detection |
-| `divine_get_sadhe_sati` | Sadhe Sati status and phase |
-| `divine_get_gemstone_suggestions` | Recommended gemstones based on chart |
-| `divine_get_yogas` | All yogas (planetary combinations) in chart |
-| `divine_get_ascendant_report` | Detailed Lagna (rising sign) report |
-| `divine_get_pitra_dosha` | Pitra Dosha check with remedies |
+|------|-------------|
+| `divine_get_panchang` | Get the complete daily Panchang for a given date and location |
+| `divine_get_tithi` | Get tithi (lunar day) details for a given date and location |
+| `divine_get_nakshatra` | Get nakshatra (lunar mansion) details for a given date and location |
+| `divine_get_karana` | Get karana details for a given date and location |
+| `divine_get_surya_nakshatra` | Get Surya (Sun) Nakshatra details for a given date and location |
+| `divine_get_yoga_panchang` | Get yoga (Sun-Moon angular relationship) for a given date and location |
 
-### 💑 Matchmaking (Kundli Milan) — 4 Tools
+### 🗓️ Panchang Extended — 7 Tools
 
 | Tool | Description |
-|---|---|
-| `divine_get_ashtakoot_milan` | 8-point Guna matching (max 36 score) |
-| `divine_get_dashakoot_milan` | 10-point matching (South Indian style) |
-| `divine_get_matching_manglik` | Manglik comparison for both persons |
-| `divine_get_matching_basic_astro` | Side-by-side astro details for both persons |
+|------|-------------|
+| `divine_get_choghadiya` | Get Choghadiya (auspicious time slots) for a given date and location |
+| `divine_get_nivas_and_shool` | Get Nivas and Shool (directional inauspicious timings) for a date and location |
+| `divine_get_ritu_and_anaya` | Get Ritu (season) and Anaya details for a given date and location |
+| `divine_get_samvath` | Get Samvath (Hindu calendar year) details for a given date and location |
+| `divine_get_chandrabalam_and_tarabalam` | Get Chandrabalam and Tarabalam for a given date and location |
+| `divine_get_other_calendars_and_epoch` | Get dates in other calendar systems and epoch values for a given date |
+| `divine_get_sun_moon` | Get sun and moon rise/set timings for a given date and location |
 
-### 🎉 Festivals — 3 Tools
+### ⏰ Timings (Muhurat & Gowri Panchangam) — 3 Tools
 
 | Tool | Description |
-|---|---|
-| `divine_get_festivals_by_month` | Festivals for a Hindu calendar month |
-| `divine_get_festivals_by_date` | Festivals on a specific date |
-| `divine_get_english_calendar_festivals` | Festivals in an English calendar month |
+|------|-------------|
+| `divine_get_auspicious_timings` | Get auspicious timings (shubh muhurat) for a given date and location |
+| `divine_get_inauspicious_timings` | Get inauspicious timings for a given date and location |
+| `divine_get_gowri_panchangam` | Get the Gowri Panchangam for a given date and location |
 
----
+### 🔮 Kundli (Birth Chart) Basics — 9 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_basic_astro_details` | Get basic astrological details for a person based on their birth data |
+| `divine_get_planetary_positions` | Get planetary positions in the birth chart (Kundli) |
+| `divine_get_horoscope_chart` | Generate a Vedic horoscope chart (Kundli diagram) as SVG and image |
+| `divine_get_bhava_kundli` | Get Bhava Kundli (house-based chart) for a given chart type |
+| `divine_get_planet_analysis` | Get detailed analysis of one planet in the birth chart |
+| `divine_get_ascendant_report` | Get a detailed report based on the ascendant (Lagna) sign |
+| `divine_get_uday_lagna` | Get Uday Lagna (rising sign) details for the birth chart |
+| `divine_get_chandramasa` | Get Chandramasa (Hindu lunar month) details for a given date and location |
+| `divine_get_chandrashtama` | Get Chandrashtama details for a given date and location |
+
+### ⚠️ Doshas — 4 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_manglik_dosha` | Check for Manglik Dosha (Mangal Dosha / Kuja Dosha) in the birth chart |
+| `divine_get_kaal_sarpa_yoga` | Check for Kaal Sarpa Yoga in the birth chart |
+| `divine_get_pitra_dosha` | Check for Pitra Dosha (ancestral affliction) in the birth chart |
+| `divine_get_sadhe_sati` | Check Sadhe Sati (Saturn transit) status for the person |
+
+### 🪐 Dasha Systems — 6 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_vimshottari_dasha` | Get Vimshottari Dasha periods for a birth chart at the requested granularity |
+| `divine_get_maha_dasha_analysis` | Get textual interpretation of a Maha Dasha period (no birth data needed) |
+| `divine_get_antar_dasha_analysis` | Get textual interpretation of an Antar Dasha (Maha→Antar) period |
+| `divine_get_pratyantar_dasha_analysis` | Get textual interpretation of a Pratyantar Dasha (Maha→Antar→Pratyantar) period |
+| `divine_get_yogini_dasha` | Get Yogini Dasha periods for a birth chart |
+| `divine_get_kaal_chakra_dasha` | Get Kaal Chakra Dasha periods for a birth chart |
+
+### 💪 Yogas & Strengths — 8 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_yogas` | Get all yogas (planetary combinations) present in the birth chart |
+| `divine_get_nav_pancham_yoga` | Get Nav Pancham Yoga compatibility analysis between two charts |
+| `divine_get_shadbala` | Get Shadbala (six-fold planetary strength) for a birth chart |
+| `divine_get_composite_friendship` | Get composite (Panchda) friendship table for all planets |
+| `divine_get_ghata_chakra` | Get Ghata Chakra (adverse combinations) for a birth chart |
+| `divine_get_sudarshana_chakra` | Get Sudarshana Chakra for a birth chart |
+| `divine_get_panchak_rahita` | Check Panchak status for a given date and location |
+| `divine_get_gemstone_suggestion` | Get gemstone recommendations based on the birth chart |
+
+### 📊 Ashtakvarga — 3 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_ashtakvarga` | Get Bhinnashtakvarga (individual Ashtakvarga) tables for all planets |
+| `divine_get_prasthara_chakra` | Get Prasthara Chakra (expanded Ashtakvarga) for a birth chart |
+| `divine_get_sarvashtakavarga` | Get Sarvashtakavarga (combined Ashtakvarga) for a specific chart |
+
+### 🌑 Sub Planets (Upagrahas) — 2 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_sub_planet_positions` | Get sub-planet (Upagraha) positions for a birth chart |
+| `divine_get_sub_planet_chart` | Generate a sub-planet (Upagraha) chart as SVG and image |
+
+### 📜 Jaimini Astrology — 4 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_jaimini_chara_dasha` | Get Jaimini Chara Dasha periods for a birth chart |
+| `divine_get_jaimini_karakamsha_lagna` | Get Karakamsha Lagna from Jaimini astrology for a birth chart |
+| `divine_get_jaimini_padas` | Get Jaimini Padas (Arudha Padas) for all houses in a birth chart |
+| `divine_get_jaimini_planetary_positions` | Get Jaimini-specific planetary positions and karakas |
+
+### 🎯 KP (Krishnamurti Paddhati) — 5 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_kp_cuspal_sub` | Get KP Cuspal Sub Lords for all house cusps |
+| `divine_get_kp_planetary_sub` | Get KP Planetary Sub Lords for all planets |
+| `divine_get_kp_cuspal_significator` | Get KP Planetary-Cuspal Significator Table |
+| `divine_get_kp_cuspal` | Get KP Cuspal chart data for a birth chart |
+| `divine_get_kp_planetary_positions` | Get KP Planetary Positions for a birth chart |
+
+### 🚀 Transits — 6 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_kundli_transit_ascendant` | Get transit analysis from the Ascendant (Lagna) on a chosen transit date |
+| `divine_get_kundli_transit_moon` | Get transit analysis from the Moon sign on a chosen transit date |
+| `divine_get_grah_gochar` | Get Grah Gochar (planetary transit) data for a specific planet |
+| `divine_get_planet_combustion_transit` | Get planet combustion (Asta) transit details for a specific planet |
+| `divine_get_planet_nakshatra_transit` | Get nakshatra transit details for a specific planet |
+| `divine_get_planet_retrograde_transit` | Get retrograde transit details for a specific planet |
+
+### 💑 Matchmaking (Kundli Milan) — 7 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_ashtakoot_milan` | Perform Ashtakoot Milan (8-point compatibility matching) for two people |
+| `divine_get_dashakoot_milan` | Perform Dashakoot Milan (10-point compatibility matching) for two people |
+| `divine_get_matching_manglik` | Check Manglik Dosha for both people in a matchmaking context |
+| `divine_get_matching_basic_astro` | Get basic astrological details for both persons in matchmaking |
+| `divine_get_matching_horoscope_chart` |  |
+| `divine_get_matching_vimshottari_dasha` | Get Vimshottari Dasha for both persons in matchmaking |
+| `divine_get_matching_planetary_positions` | Get planetary positions for both persons in matchmaking |
+
+### 🎉 Festivals — 4 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_festivals_by_date` | Get festivals falling on a specific date |
+| `divine_get_english_calendar_festivals` | Get all Hindu festivals for a specific English calendar month |
+| `divine_find_festival` | Find/search for festivals for a given date and location |
+| `divine_get_festivals_by_month` | Get all Hindu festivals for a specific Hindu calendar month |
+
+### 📅 Monthly Lists — 5 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_chandramasa_list` | Get list of Chandramasa (Hindu lunar months) for a given period |
+| `divine_get_month_nakshatra_list` | Get daily nakshatra list for a given month |
+| `divine_get_month_sunrise_sunset_list` | Get daily sunrise and sunset times for a given month |
+| `divine_get_month_surya_nakshatra_list` | Get daily Surya (Sun) Nakshatra list for a given month |
+| `divine_get_month_tithi_list` | Get daily tithi list for a given month |
 
 ## 🌐 Language Support
 
