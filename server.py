@@ -721,6 +721,18 @@ async def divine_get_inauspicious_timings(params: PanchangInput, ctx: Context) -
     return await _call_divine_api("/indian-api/v1/inauspicious-timings", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
 
 
+@mcp.tool(name="divine_get_gowri_panchangam", annotations=TOOL_ANNOTATIONS)
+async def divine_get_gowri_panchangam(params: PanchangInput, ctx: Context) -> str:
+    """Get the Gowri Panchangam for a given date and location.
+
+    Returns auspicious and inauspicious time segments for the day and night
+    (Laabam, Uthi, etc.) plus Nalla Neram (good time) periods, per the South
+    Indian Gowri Panchangam system.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/find-gowri-panchangam", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
+
+
 # ══════════════════════════════════════════════
 # KUNDLI BASICS — astroapi-3.divineapi.com
 # ══════════════════════════════════════════════

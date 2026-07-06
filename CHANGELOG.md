@@ -1,6 +1,17 @@
 # Changelog
 
-## [Unreleased] - 2026-06-29
+## [Unreleased] - 2026-07-06
+
+### Added
+
+**New tool: `divine_get_gowri_panchangam`.**
+Wraps the new backend endpoint `POST /indian-api/v1/find-gowri-panchangam`
+(astroapi-3). Returns Gowri Panchangam auspicious/inauspicious day and night
+segments plus Nalla Neram periods for a date and location. Standard
+`PanchangInput` (date + place), no selector fields. Verified against the live
+endpoint before adding.
+
+## [Released] - 2026-06-29
 
 Three MCP-wrapper bugs found while debugging a customer report. All fixed and deployed.
 
