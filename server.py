@@ -1710,6 +1710,25 @@ async def divine_find_festival(params: PanchangInput, ctx: Context) -> str:
     return await _call_divine_api("/indian-api/v1/find-festival", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
 
 
+@mcp.tool(name="divine_get_malayalam_festivals", annotations=TOOL_ANNOTATIONS)
+async def divine_get_malayalam_festivals(
+    year: str = Field(..., description="Year (e.g., '2027')"),
+    place: str = Field(..., description="Place name (e.g., 'New Delhi')"),
+    lat: str = Field(..., description="Latitude (e.g., '28.6139')"),
+    lon: str = Field(..., description="Longitude (e.g., '77.2090')"),
+    tzone: str = Field(..., description="Timezone offset (e.g., '5.5')"),
+    ctx: Context = None,
+) -> str:
+    """Get major Malayalam (Kerala) festivals for a year.
+
+    Returns Vishu Kani, Onam, Thrissur Pooram, Guruvayur Ekadashi, Makara
+    Vilakku and other Kerala festivals with dates and images.
+    """
+    payload = {"year": year, "place": place, "lat": lat, "lon": lon, "tzone": tzone}
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/malayalam-festivals", payload, api_key=api_key, auth_token=auth_token)
+
+
 @mcp.tool(name="divine_get_festivals_by_month", annotations=TOOL_ANNOTATIONS)
 async def divine_get_festivals_by_month(
     hindu_month: str = Field(..., description="Hindu month: margashirsha, pausha, magha, phalguna, chaitra, vaishakha, jyeshtha, ashadha, shravana, bhadrapada, ashvina, kartika"),

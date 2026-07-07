@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased] - 2026-07-07
+
+### Added
+
+**New tool: `divine_get_malayalam_festivals`.**
+Wraps `POST /indian-api/v1/malayalam-festivals` (astroapi-3). Returns major
+Kerala festivals (Vishu Kani, Onam, Thrissur Pooram, Guruvayur Ekadashi, etc.)
+for a given year and location. Params: year, place, lat, lon, tzone (no lan).
+Verified against the live endpoint before adding.
+
 ## [Unreleased] - 2026-07-06
 
 ### Added
