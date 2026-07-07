@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "divineapi-indian-astrology-mcp"
-version = "2.1.4"
+version = "2.2.0"
 description = "Official MCP server for Divine API's Indian/Vedic Astrology services — Panchang, Kundli, Matchmaking, Festivals"
 readme = "README.md"
 license = "MIT"
