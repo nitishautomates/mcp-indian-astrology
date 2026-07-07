@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased] - 2026-07-08
+## [2.1.4] - 2026-07-08
 
 Param-parity fix batch. Every change below was verified against the live
 backend with curl before coding, and every changed tool passed a live
