@@ -93,7 +93,7 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (79 Total)
+## 📋 Available Tools (81 Total)
 
 ### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
@@ -113,7 +113,7 @@ claude mcp add divine-indian-astrology \
 | `divine_get_choghadiya` | Get Choghadiya (auspicious time slots) for a given date and location |
 | `divine_get_nivas_and_shool` | Get Nivas and Shool (directional inauspicious timings) for a date and location |
 | `divine_get_ritu_and_anaya` | Get Ritu (season) and Anaya details for a given date and location |
-| `divine_get_samvath` | Get Samvath (Hindu calendar year) details for a given date and location |
+| `divine_get_samvat` | Get Samvat (Hindu calendar year) details for a given date and location |
 | `divine_get_chandrabalam_and_tarabalam` | Get Chandrabalam and Tarabalam for a given date and location |
 | `divine_get_other_calendars_and_epoch` | Get dates in other calendar systems and epoch values for a given date |
 | `divine_get_sun_moon` | Get sun and moon rise/set timings for a given date and location |
@@ -133,12 +133,12 @@ claude mcp add divine-indian-astrology \
 | `divine_get_basic_astro_details` | Get basic astrological details for a person based on their birth data |
 | `divine_get_planetary_positions` | Get planetary positions in the birth chart (Kundli) |
 | `divine_get_horoscope_chart` | Generate a Vedic horoscope chart (Kundli diagram) as SVG and image |
-| `divine_get_bhava_kundli` | Get Bhava Kundli (house-based chart) for a given chart type |
+| `divine_get_bhava_kundli` | Get Bhava Kundli (house-based chart) for a given bhava chart number |
 | `divine_get_planet_analysis` | Get detailed analysis of one planet in the birth chart |
 | `divine_get_ascendant_report` | Get a detailed report based on the ascendant (Lagna) sign |
-| `divine_get_uday_lagna` | Get Uday Lagna (rising sign) details for the birth chart |
+| `divine_get_uday_lagna` | Get Uday Lagna (rising sign) timings for a given date and location |
 | `divine_get_chandramasa` | Get Chandramasa (Hindu lunar month) details for a given date and location |
-| `divine_get_chandrashtama` | Get Chandrashtama details for a given date and location |
+| `divine_get_chandrashtama` | Get Chandrashtama periods for a given month and location |
 
 ### ⚠️ Doshas — 4 Tools
 
@@ -230,14 +230,16 @@ claude mcp add divine-indian-astrology \
 | `divine_get_matching_vimshottari_dasha` | Get Vimshottari Dasha for both persons in matchmaking |
 | `divine_get_matching_planetary_positions` | Get planetary positions for both persons in matchmaking |
 
-### 🎉 Festivals — 4 Tools
+### 🎉 Festivals — 6 Tools
 
 | Tool | Description |
 |------|-------------|
 | `divine_get_festivals_by_date` | Get festivals falling on a specific date |
 | `divine_get_english_calendar_festivals` | Get all Hindu festivals for a specific English calendar month |
-| `divine_find_festival` | Find/search for festivals for a given date and location |
+| `divine_find_festival` | Find the date(s) of a specific festival in a given year |
 | `divine_get_festivals_by_month` | Get all Hindu festivals for a specific Hindu calendar month |
+| `divine_get_malayalam_festivals` | Get major Malayalam (Kerala) festivals for a year |
+| `divine_get_tamil_festivals` | Get major Tamil festivals for a year |
 
 ### 📅 Monthly Lists — 5 Tools
 

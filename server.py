@@ -271,6 +271,16 @@ VALID_DASHA_TYPES = {
     "sookshma-dasha", "prana-dasha", "deha-dasha",
 }
 
+VALID_NODE_TYPES = {"meannode", "truenode"}
+
+VALID_MONTH_TYPES = {"amanta", "purnimanta"}
+
+VALID_CHART_STYLES = {"north", "south"}
+
+# The bhava-kundli endpoint accepts ONLY numeric chart ids 1-12
+# (verified live 2026-07-08; D1/chalit/sun/moon style ids are rejected).
+VALID_BHAVA_CHART_IDS = {str(i) for i in range(1, 13)}
+
 TOOL_ANNOTATIONS = {
     "readOnlyHint": True,
     "destructiveHint": False,
@@ -372,6 +382,56 @@ class FestivalInput(BaseModel):
     lat: str = Field(..., description="Latitude (e.g., '28.6139')")
     lon: str = Field(..., description="Longitude (e.g., '77.2090')")
     tzone: str = Field(..., description="Timezone offset (e.g., '5.5')")
+
+
+class MonthInput(BaseModel):
+    """Input for month-scoped list APIs. Requires month, year, and location."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra="forbid")
+
+    month: str = Field(..., description="Month number (e.g., '05' for May)", min_length=1, max_length=2)
+    year: str = Field(..., description="Year (e.g., '2025')", min_length=4, max_length=4)
+    place: str = Field(..., description="Place name (e.g., 'New Delhi')", min_length=1, max_length=200)
+    lat: str = Field(..., description="Latitude of the place (e.g., '28.6139')")
+    lon: str = Field(..., description="Longitude of the place (e.g., '77.2090')")
+    tzone: str = Field(..., description="Timezone offset from UTC (e.g., '5.5' for IST)")
+    day: str | None = Field(default=None, description="Deprecated: this endpoint is month-scoped and ignores day. Accepted for backward compatibility, not sent to the API.")
+    lan: str | None = Field(default=None, description="Deprecated: this endpoint ignores lan. Accepted for backward compatibility, not sent to the API.")
+
+
+class ChandrashtamaInput(BaseModel):
+    """Input for the Chandrashtama API. Month-scoped; day optionally narrows to one date."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra="forbid")
+
+    month: str = Field(..., description="Month number (e.g., '05' for May)", min_length=1, max_length=2)
+    year: str = Field(..., description="Year (e.g., '2025')", min_length=4, max_length=4)
+    place: str = Field(..., description="Place name (e.g., 'New Delhi')", min_length=1, max_length=200)
+    lat: str = Field(..., description="Latitude of the place (e.g., '28.6139')")
+    lon: str = Field(..., description="Longitude of the place (e.g., '77.2090')")
+    tzone: str = Field(..., description="Timezone offset from UTC (e.g., '5.5' for IST)")
+    day: str | None = Field(default=None, description="Optional day of the month; when set, results are narrowed to that specific date", max_length=2)
+    lan: str = Field(default="en", description="Language code for response (default 'en')")
+
+
+class UdayLagnaInput(BaseModel):
+    """Input for the Uday Lagna API: date and location only."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra="forbid")
+
+    day: str = Field(..., description="Day of the month (e.g., '24')", min_length=1, max_length=2)
+    month: str = Field(..., description="Month number (e.g., '05' for May)", min_length=1, max_length=2)
+    year: str = Field(..., description="Year (e.g., '2025')", min_length=4, max_length=4)
+    place: str = Field(..., description="Place name (e.g., 'New Delhi')", min_length=1, max_length=200)
+    lat: str = Field(..., description="Latitude of the place (e.g., '28.6139')")
+    lon: str = Field(..., description="Longitude of the place (e.g., '77.2090')")
+    tzone: str = Field(..., description="Timezone offset from UTC (e.g., '5.5' for IST)")
+    lan: str = Field(default="en", description="Language code for response (default 'en')")
+    full_name: str | None = Field(default=None, description="Deprecated: ignored by this endpoint. Accepted for backward compatibility, not sent to the API.")
+    gender: str | None = Field(default=None, description="Deprecated: ignored by this endpoint. Accepted for backward compatibility, not sent to the API.")
+    hour: str | None = Field(default=None, description="Deprecated: ignored by this endpoint. Accepted for backward compatibility, not sent to the API.")
+    min: str | None = Field(default=None, description="Deprecated: ignored by this endpoint. Accepted for backward compatibility, not sent to the API.")
+    sec: str | None = Field(default=None, description="Deprecated: ignored by this endpoint. Accepted for backward compatibility, not sent to the API.")
 
 
 # ──────────────────────────────────────────────
@@ -545,6 +605,62 @@ def _kundli_params_payload(**kwargs) -> dict:
     }
 
 
+def _month_payload(params: MonthInput) -> dict:
+    """Build a month-scoped payload. Deprecated day/lan inputs are NOT forwarded."""
+    return {
+        "month": params.month,
+        "year": params.year,
+        "place": params.place,
+        "lat": params.lat,
+        "lon": params.lon,
+        "tzone": params.tzone,
+    }
+
+
+def _apply_node_type(payload: dict, node_type: str | None) -> str | None:
+    """Validate optional node_type and add it to the payload.
+
+    Returns an error message string on invalid input, else None.
+    """
+    if node_type:
+        nt = node_type.lower().strip()
+        if nt not in VALID_NODE_TYPES:
+            return f"Error: Invalid node_type '{node_type}'. Must be one of: {', '.join(sorted(VALID_NODE_TYPES))}"
+        payload["node_type"] = nt
+    return None
+
+
+def _apply_chart_style(
+    payload: dict,
+    chart_type: str | None = None,
+    chart_color: str | None = None,
+    line_color: str | None = None,
+    planet_color: str | None = None,
+    sign_color: str | None = None,
+    show_planet_degree: str | None = None,
+    show_planet_retro: str | None = None,
+    show_modern_planets: str | None = None,
+) -> str | None:
+    """Validate optional chart styling params and add the provided ones to the payload.
+
+    Returns an error message string on invalid input, else None.
+    """
+    if chart_type:
+        ct = chart_type.lower().strip()
+        if ct not in VALID_CHART_STYLES:
+            return f"Error: Invalid chart_type '{chart_type}'. Must be one of: {', '.join(sorted(VALID_CHART_STYLES))}"
+        payload["chart_type"] = ct
+    for key, val in (
+        ("chart_color", chart_color), ("line_color", line_color),
+        ("planet_color", planet_color), ("sign_color", sign_color),
+        ("show_planet_degree", show_planet_degree), ("show_planet_retro", show_planet_retro),
+        ("show_modern_planets", show_modern_planets),
+    ):
+        if val:
+            payload[key] = val
+    return None
+
+
 # ══════════════════════════════════════════════
 # PANCHANG TOOLS — astroapi-1.divineapi.com
 # ══════════════════════════════════════════════
@@ -652,14 +768,14 @@ async def divine_get_ritu_and_anaya(params: PanchangInput, ctx: Context) -> str:
     return await _call_divine_api("/indian-api/v1/find-ritu-and-anaya", _panchang_payload(params), API_HOST_2, api_key=api_key, auth_token=auth_token)
 
 
-@mcp.tool(name="divine_get_samvath", annotations=TOOL_ANNOTATIONS)
-async def divine_get_samvath(params: PanchangInput, ctx: Context) -> str:
-    """Get Samvath (Hindu calendar year) details for a given date and location.
+@mcp.tool(name="divine_get_samvat", annotations=TOOL_ANNOTATIONS)
+async def divine_get_samvat(params: PanchangInput, ctx: Context) -> str:
+    """Get Samvat (Hindu calendar year) details for a given date and location.
 
     Returns the current Vikram Samvat, Shaka Samvat year names and numbers.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/find-samvath", _panchang_payload(params), API_HOST_2, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/find-samvat", _panchang_payload(params), API_HOST_2, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_chandrabalam_and_tarabalam", annotations=TOOL_ANNOTATIONS)
@@ -750,14 +866,22 @@ async def divine_get_basic_astro_details(params: KundliInput, ctx: Context) -> s
 
 
 @mcp.tool(name="divine_get_planetary_positions", annotations=TOOL_ANNOTATIONS)
-async def divine_get_planetary_positions(params: KundliInput, ctx: Context) -> str:
+async def divine_get_planetary_positions(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Get planetary positions in the birth chart (Kundli).
 
     Returns positions of all 9 Vedic planets (Sun, Moon, Mars, Mercury, Jupiter,
     Venus, Saturn, Rahu, Ketu) with sign, degree, nakshatra, and house placement.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/planetary-positions", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v2/planetary-positions", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_horoscope_chart", annotations=TOOL_ANNOTATIONS)
@@ -776,12 +900,21 @@ async def divine_get_horoscope_chart(
     lon: str = Field(..., description="Longitude (e.g., '77.1025')"),
     tzone: str = Field(..., description="Timezone offset (e.g., '5.5')"),
     lan: str = Field(default="en", description="Language code"),
+    chart_type: str | None = Field(default=None, description="Chart style: 'north' (diamond) or 'south' (square)"),
+    chart_color: str | None = Field(default=None, description="Chart background color as hex (e.g., '#ffffff')"),
+    line_color: str | None = Field(default=None, description="Chart line color as hex (e.g., '#333333')"),
+    planet_color: str | None = Field(default=None, description="Planet label color as hex (e.g., '#333333')"),
+    sign_color: str | None = Field(default=None, description="Sign label color as hex (e.g., '#333333')"),
+    show_planet_degree: str | None = Field(default=None, description="Set '1' to show planet degrees on the chart, '0' to hide"),
+    show_planet_retro: str | None = Field(default=None, description="Set '1' to mark retrograde planets on the chart, '0' to hide"),
+    show_modern_planets: str | None = Field(default=None, description="Set '1' to include Uranus/Neptune/Pluto on the chart, '0' to hide"),
     ctx: Context = None,
 ) -> str:
     """Generate a Vedic horoscope chart (Kundli diagram) as SVG and image.
 
     Supports divisional charts: D1 (Lagna/Rashi), D2 (Hora), D3 (Drekkana),
     D9 (Navamsha), D10 (Dashamsha), chalit, sun, moon, and more.
+    Optional styling: chart_type (north/south), hex colors, show_* toggles.
     """
     chart_id_upper = chart_id.upper() if chart_id.lower() not in ("chalit", "sun", "moon") else chart_id.lower()
     api_key, auth_token = _get_credentials(ctx)
@@ -790,12 +923,16 @@ async def divine_get_horoscope_chart(
         "hour": hour, "min": min, "sec": sec, "gender": gender,
         "place": place, "lat": lat, "lon": lon, "tzone": tzone, "lan": lan,
     })
+    err = _apply_chart_style(payload, chart_type, chart_color, line_color, planet_color,
+                             sign_color, show_planet_degree, show_planet_retro, show_modern_planets)
+    if err:
+        return err
     return await _call_divine_api(f"/indian-api/v1/horoscope-chart/{chart_id_upper}", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_bhava_kundli", annotations=TOOL_ANNOTATIONS)
 async def divine_get_bhava_kundli(
-    chart_id: str = Field(..., description="Chart type: D1, D2, D3, D9, D10, chalit, sun, moon, etc."),
+    chart_id: str = Field(..., description="Bhava chart number: '1' through '12'"),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -809,21 +946,32 @@ async def divine_get_bhava_kundli(
     lon: str = Field(..., description="Longitude (e.g., '77.1025')"),
     tzone: str = Field(..., description="Timezone offset (e.g., '5.5')"),
     lan: str = Field(default="en", description="Language code"),
+    chart_type: str | None = Field(default=None, description="Chart style: 'north' (diamond) or 'south' (square)"),
+    chart_color: str | None = Field(default=None, description="Chart background color as hex (e.g., '#ffffff')"),
+    line_color: str | None = Field(default=None, description="Chart line color as hex (e.g., '#333333')"),
+    planet_color: str | None = Field(default=None, description="Planet label color as hex (e.g., '#333333')"),
+    sign_color: str | None = Field(default=None, description="Sign label color as hex (e.g., '#333333')"),
     ctx: Context = None,
 ) -> str:
-    """Get Bhava Kundli (house-based chart) for a given chart type.
+    """Get Bhava Kundli (house-based chart) for a given bhava chart number.
 
     Unlike the rashi chart which shows sign placements, the Bhava chart
     shows exact house cusps and planetary positions within houses.
+    Returns the chart as SVG and image. chart_id is a number from 1 to 12.
     """
-    chart_id_upper = chart_id.upper() if chart_id.lower() not in ("chalit", "sun", "moon") else chart_id.lower()
+    cid = chart_id.strip()
+    if cid not in VALID_BHAVA_CHART_IDS:
+        return f"Error: Invalid chart_id '{chart_id}'. Must be a number from 1 to 12."
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
         "hour": hour, "min": min, "sec": sec, "gender": gender,
         "place": place, "lat": lat, "lon": lon, "tzone": tzone, "lan": lan,
     })
-    return await _call_divine_api(f"/indian-api/v1/bhava-kundli/{chart_id_upper}", payload, api_key=api_key, auth_token=auth_token)
+    err = _apply_chart_style(payload, chart_type, chart_color, line_color, planet_color, sign_color)
+    if err:
+        return err
+    return await _call_divine_api(f"/indian-api/v1/bhava-kundli/{cid}", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_planet_analysis", annotations=TOOL_ANNOTATIONS)
@@ -857,36 +1005,59 @@ async def divine_get_ascendant_report(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_uday_lagna", annotations=TOOL_ANNOTATIONS)
-async def divine_get_uday_lagna(params: KundliInput, ctx: Context) -> str:
-    """Get Uday Lagna (rising sign) details for the birth chart.
+async def divine_get_uday_lagna(params: UdayLagnaInput, ctx: Context) -> str:
+    """Get Uday Lagna (rising sign) timings for a given date and location.
 
-    Returns the exact degree, sign, and nakshatra of the ascendant
-    at the moment of birth with precise calculations.
+    Returns the lagna (ascendant sign) rising periods across the day,
+    with sunrise and sunset times. Needs only date and location; birth
+    details are not used by this endpoint.
     """
+    payload = {
+        "day": params.day, "month": params.month, "year": params.year,
+        "place": params.place, "lat": params.lat, "lon": params.lon,
+        "tzone": params.tzone, "lan": params.lan,
+    }
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/uday-lagna", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v2/uday-lagna", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_chandramasa", annotations=TOOL_ANNOTATIONS)
-async def divine_get_chandramasa(params: PanchangInput, ctx: Context) -> str:
+async def divine_get_chandramasa(
+    params: PanchangInput = Field(..., description="Date, location, and timezone"),
+    month_type: str | None = Field(default=None, description="Lunar month system: 'amanta' (default, new-moon ending) or 'purnimanta' (full-moon ending)"),
+    ctx: Context = None,
+) -> str:
     """Get Chandramasa (Hindu lunar month) details for a given date and location.
 
     Returns the current Hindu lunar month name, Purnimant/Amant system,
     and the start/end dates of the lunar month.
     """
+    payload = _panchang_payload(params)
+    if month_type:
+        mt = month_type.lower().strip()
+        if mt not in VALID_MONTH_TYPES:
+            return f"Error: Invalid month_type '{month_type}'. Must be one of: {', '.join(sorted(VALID_MONTH_TYPES))}"
+        payload["month_type"] = mt
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/chandramasa", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v2/chandramasa", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_chandrashtama", annotations=TOOL_ANNOTATIONS)
-async def divine_get_chandrashtama(params: PanchangInput, ctx: Context) -> str:
-    """Get Chandrashtama details for a given date and location.
+async def divine_get_chandrashtama(params: ChandrashtamaInput, ctx: Context) -> str:
+    """Get Chandrashtama periods for a given month and location.
 
     Chandrashtama is when Moon transits through the 8th house from one's
-    birth Moon sign, considered inauspicious for new ventures.
+    birth Moon sign, considered inauspicious for new ventures. Returns the
+    month's periods per moon sign; set day to narrow to a specific date.
     """
+    payload = {
+        "month": params.month, "year": params.year, "place": params.place,
+        "lat": params.lat, "lon": params.lon, "tzone": params.tzone, "lan": params.lan,
+    }
+    if params.day:
+        payload["day"] = params.day
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/chandrashtama", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v2/chandrashtama", payload, api_key=api_key, auth_token=auth_token)
 
 
 # ══════════════════════════════════════════════
@@ -906,14 +1077,22 @@ async def divine_get_manglik_dosha(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_kaal_sarpa_yoga", annotations=TOOL_ANNOTATIONS)
-async def divine_get_kaal_sarpa_yoga(params: KundliInput, ctx: Context) -> str:
+async def divine_get_kaal_sarpa_yoga(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Check for Kaal Sarpa Yoga in the birth chart.
 
     Occurs when all planets are hemmed between Rahu and Ketu.
     Returns the type of Kaal Sarpa Yoga and its effects.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/kaal-sarpa-yoga", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/kaal-sarpa-yoga", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_pitra_dosha", annotations=TOOL_ANNOTATIONS)
@@ -1243,6 +1422,10 @@ async def divine_get_sub_planet_chart(
     lon: str = Field(..., description="Longitude (e.g., '77.1025')"),
     tzone: str = Field(..., description="Timezone offset (e.g., '5.5')"),
     lan: str = Field(default="en", description="Language code"),
+    chart_color: str | None = Field(default=None, description="Chart background color as hex (e.g., '#ffffff')"),
+    line_color: str | None = Field(default=None, description="Chart line color as hex (e.g., '#333333')"),
+    planet_color: str | None = Field(default=None, description="Planet label color as hex (e.g., '#333333')"),
+    sign_color: str | None = Field(default=None, description="Sign label color as hex (e.g., '#333333')"),
     ctx: Context = None,
 ) -> str:
     """Generate a sub-planet (Upagraha) chart as SVG and image.
@@ -1256,7 +1439,9 @@ async def divine_get_sub_planet_chart(
         "hour": hour, "min": min, "sec": sec, "gender": gender,
         "place": place, "lat": lat, "lon": lon, "tzone": tzone, "lan": lan,
     })
-    payload["chart_type"] = chart_type
+    err = _apply_chart_style(payload, chart_type, chart_color, line_color, planet_color, sign_color)
+    if err:
+        return err
     return await _call_divine_api("/indian-api/v1/sub-planet-chart", payload, api_key=api_key, auth_token=auth_token)
 
 
@@ -1277,14 +1462,22 @@ async def divine_get_jaimini_chara_dasha(params: KundliInput, ctx: Context) -> s
 
 
 @mcp.tool(name="divine_get_jaimini_karakamsha_lagna", annotations=TOOL_ANNOTATIONS)
-async def divine_get_jaimini_karakamsha_lagna(params: KundliInput, ctx: Context) -> str:
+async def divine_get_jaimini_karakamsha_lagna(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Get Karakamsha Lagna from Jaimini astrology for a birth chart.
 
     The sign occupied by the Atmakaraka in the Navamsha chart.
     Reveals the soul's desire and spiritual inclinations.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/jaimini-astrology/karakamsha-lagna", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/jaimini-astrology/karakamsha-lagna", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_jaimini_padas", annotations=TOOL_ANNOTATIONS)
@@ -1299,14 +1492,22 @@ async def divine_get_jaimini_padas(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_jaimini_planetary_positions", annotations=TOOL_ANNOTATIONS)
-async def divine_get_jaimini_planetary_positions(params: KundliInput, ctx: Context) -> str:
+async def divine_get_jaimini_planetary_positions(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Get Jaimini-specific planetary positions and karakas.
 
     Returns Chara Karakas (variable significators) like Atmakaraka,
     Amatyakaraka, etc. based on planetary degrees.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/jaimini-astrology/planetary-positions", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v2/jaimini-astrology/planetary-positions", payload, api_key=api_key, auth_token=auth_token)
 
 
 # ══════════════════════════════════════════════
@@ -1326,25 +1527,41 @@ async def divine_get_kp_cuspal_sub(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_kp_planetary_sub", annotations=TOOL_ANNOTATIONS)
-async def divine_get_kp_planetary_sub(params: KundliInput, ctx: Context) -> str:
+async def divine_get_kp_planetary_sub(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Get KP Planetary Sub Lords for all planets.
 
     Returns the star lord and sub lord for each planet in the KP system,
     essential for KP-based event prediction.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/kp/planetary-sub", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/kp/planetary-sub", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_kp_cuspal_significator", annotations=TOOL_ANNOTATIONS)
-async def divine_get_kp_cuspal_significator(params: KundliInput, ctx: Context) -> str:
+async def divine_get_kp_cuspal_significator(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Get KP Planetary-Cuspal Significator Table.
 
     A comprehensive table showing which houses each planet signifies
     as star lord and sub lord. Core of KP prediction methodology.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/kp/planetary-cuspal-significator-table", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/kp/planetary-cuspal-significator-table", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_kp_cuspal", annotations=TOOL_ANNOTATIONS)
@@ -1359,14 +1576,22 @@ async def divine_get_kp_cuspal(params: KundliInput, ctx: Context) -> str:
 
 
 @mcp.tool(name="divine_get_kp_planetary_positions", annotations=TOOL_ANNOTATIONS)
-async def divine_get_kp_planetary_positions(params: KundliInput, ctx: Context) -> str:
+async def divine_get_kp_planetary_positions(
+    params: KundliInput = Field(..., description="Birth details"),
+    node_type: str | None = Field(default=None, description="Rahu/Ketu calculation method: 'meannode' (default) or 'truenode'"),
+    ctx: Context = None,
+) -> str:
     """Get KP Planetary Positions for a birth chart.
 
     Returns planetary positions calculated using KP ayanamsha with
     sign lord, star lord, and sub lord for each planet.
     """
+    payload = _kundli_payload(params)
+    err = _apply_node_type(payload, node_type)
+    if err:
+        return err
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v2/kp/planetary-positions", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v2/kp/planetary-positions", payload, api_key=api_key, auth_token=auth_token)
 
 
 # ══════════════════════════════════════════════
@@ -1380,16 +1605,34 @@ async def divine_get_kundli_transit_ascendant(
     transit_day: str = Field(..., description="Transit day (e.g., '24')"),
     transit_month: str = Field(..., description="Transit month (e.g., '05')"),
     transit_year: str = Field(..., description="Transit year (e.g., '2025')"),
+    transit_hour: str | None = Field(default=None, description="Transit hour in 24h format (e.g., '13')"),
+    transit_min: str | None = Field(default=None, description="Transit minute (e.g., '00')"),
+    transit_sec: str | None = Field(default=None, description="Transit second (e.g., '00')"),
+    chart_type: str | None = Field(default=None, description="Chart style: 'north' (diamond) or 'south' (square)"),
+    chart_color: str | None = Field(default=None, description="Chart background color as hex (e.g., '#ffffff')"),
+    line_color: str | None = Field(default=None, description="Chart line color as hex (e.g., '#333333')"),
+    planet_color: str | None = Field(default=None, description="Planet label color as hex (e.g., '#333333')"),
+    sign_color: str | None = Field(default=None, description="Sign label color as hex (e.g., '#333333')"),
+    show_planet_degree: str | None = Field(default=None, description="Set '1' to show planet degrees on the chart, '0' to hide"),
+    show_planet_retro: str | None = Field(default=None, description="Set '1' to mark retrograde planets on the chart, '0' to hide"),
     ctx: Context = None,
 ) -> str:
     """Get transit analysis from the Ascendant (Lagna) on a chosen transit date.
 
     Shows planetary transits on the given date analyzed from the birth Ascendant,
-    indicating effects on different life areas.
+    indicating effects on different life areas. Optionally set transit time
+    (hour/min/sec) and chart styling.
     """
     api_key, auth_token = _get_credentials(ctx)
     payload = {**_kundli_payload(params),
                "transit_day": transit_day, "transit_month": transit_month, "transit_year": transit_year}
+    for key, val in (("transit_hour", transit_hour), ("transit_min", transit_min), ("transit_sec", transit_sec)):
+        if val:
+            payload[key] = val
+    err = _apply_chart_style(payload, chart_type, chart_color, line_color, planet_color,
+                             sign_color, show_planet_degree, show_planet_retro)
+    if err:
+        return err
     return await _call_divine_api("/indian-api/v1/kundli-transit/ascendant", payload, api_key=api_key, auth_token=auth_token)
 
 
@@ -1399,16 +1642,34 @@ async def divine_get_kundli_transit_moon(
     transit_day: str = Field(..., description="Transit day (e.g., '24')"),
     transit_month: str = Field(..., description="Transit month (e.g., '05')"),
     transit_year: str = Field(..., description="Transit year (e.g., '2025')"),
+    transit_hour: str | None = Field(default=None, description="Transit hour in 24h format (e.g., '13')"),
+    transit_min: str | None = Field(default=None, description="Transit minute (e.g., '00')"),
+    transit_sec: str | None = Field(default=None, description="Transit second (e.g., '00')"),
+    chart_type: str | None = Field(default=None, description="Chart style: 'north' (diamond) or 'south' (square)"),
+    chart_color: str | None = Field(default=None, description="Chart background color as hex (e.g., '#ffffff')"),
+    line_color: str | None = Field(default=None, description="Chart line color as hex (e.g., '#333333')"),
+    planet_color: str | None = Field(default=None, description="Planet label color as hex (e.g., '#333333')"),
+    sign_color: str | None = Field(default=None, description="Sign label color as hex (e.g., '#333333')"),
+    show_planet_degree: str | None = Field(default=None, description="Set '1' to show planet degrees on the chart, '0' to hide"),
+    show_planet_retro: str | None = Field(default=None, description="Set '1' to mark retrograde planets on the chart, '0' to hide"),
     ctx: Context = None,
 ) -> str:
     """Get transit analysis from the Moon sign on a chosen transit date.
 
     Shows planetary transits on the given date analyzed from the birth Moon sign,
-    the most commonly used transit reference in Vedic astrology.
+    the most commonly used transit reference in Vedic astrology. Optionally set
+    transit time (hour/min/sec) and chart styling.
     """
     api_key, auth_token = _get_credentials(ctx)
     payload = {**_kundli_payload(params),
                "transit_day": transit_day, "transit_month": transit_month, "transit_year": transit_year}
+    for key, val in (("transit_hour", transit_hour), ("transit_min", transit_min), ("transit_sec", transit_sec)):
+        if val:
+            payload[key] = val
+    err = _apply_chart_style(payload, chart_type, chart_color, line_color, planet_color,
+                             sign_color, show_planet_degree, show_planet_retro)
+    if err:
+        return err
     return await _call_divine_api("/indian-api/v1/kundli-transit/moon", payload, api_key=api_key, auth_token=auth_token)
 
 
@@ -1700,14 +1961,19 @@ async def divine_get_english_calendar_festivals(
 
 
 @mcp.tool(name="divine_find_festival", annotations=TOOL_ANNOTATIONS)
-async def divine_find_festival(params: PanchangInput, ctx: Context) -> str:
-    """Find/search for festivals for a given date and location.
+async def divine_find_festival(
+    festival: str = Field(..., description="Festival identifier in lowercase snake_case from the DivineAPI festival list (e.g., 'maha_shivratri', 'shraavana_somvaar_vrat'). The API rejects names outside its list with 'Please enter valid festival'."),
+    params: FestivalInput = Field(..., description="Year and location"),
+    ctx: Context = None,
+) -> str:
+    """Find the date(s) of a specific festival in a given year.
 
-    Returns festival information including upcoming festivals,
-    their significance, and observance details.
+    Returns the date or dates on which the named festival falls in the
+    specified year, with location-adjusted timing and festival details.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/find-festival", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
+    payload = {**_festival_payload(params), "festival": festival.lower().strip()}
+    return await _call_divine_api("/indian-api/v1/find-festival", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_malayalam_festivals", annotations=TOOL_ANNOTATIONS)
@@ -1794,58 +2060,65 @@ async def divine_get_festivals_by_month(
 
 
 @mcp.tool(name="divine_get_chandramasa_list", annotations=TOOL_ANNOTATIONS)
-async def divine_get_chandramasa_list(params: PanchangInput, ctx: Context) -> str:
+async def divine_get_chandramasa_list(params: MonthInput, ctx: Context) -> str:
     """Get list of Chandramasa (Hindu lunar months) for a given period.
 
     Returns the start and end dates of each Hindu lunar month
     for the specified year and location.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/chandramasa-list", _panchang_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/chandramasa-list", _month_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_month_nakshatra_list", annotations=TOOL_ANNOTATIONS)
-async def divine_get_month_nakshatra_list(params: PanchangInput, ctx: Context) -> str:
+async def divine_get_month_nakshatra_list(
+    params: MonthInput = Field(..., description="Month, year, and location"),
+    nakshatra_pada: str | None = Field(default=None, description="Optional: set '1' to include nakshatra pada (quarter) details in the response"),
+    ctx: Context = None,
+) -> str:
     """Get daily nakshatra list for a given month.
 
     Returns the nakshatra for each day of the specified month,
     with start/end times and nakshatra lord details.
     """
+    payload = _month_payload(params)
+    if nakshatra_pada:
+        payload["nakshatra_pada"] = nakshatra_pada
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/month-nakshatra-list", _panchang_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/month-nakshatra-list", payload, API_HOST_8, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_month_sunrise_sunset_list", annotations=TOOL_ANNOTATIONS)
-async def divine_get_month_sunrise_sunset_list(params: PanchangInput, ctx: Context) -> str:
+async def divine_get_month_sunrise_sunset_list(params: MonthInput, ctx: Context) -> str:
     """Get daily sunrise and sunset times for a given month.
 
     Returns sunrise and sunset times for each day of the specified
     month at the given location.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/month-sunrise-sunset-list", _panchang_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/month-sunrise-sunset-list", _month_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_month_surya_nakshatra_list", annotations=TOOL_ANNOTATIONS)
-async def divine_get_month_surya_nakshatra_list(params: PanchangInput, ctx: Context) -> str:
+async def divine_get_month_surya_nakshatra_list(params: MonthInput, ctx: Context) -> str:
     """Get daily Surya (Sun) Nakshatra list for a given month.
 
     Returns the Sun's nakshatra position for each day of the month,
     useful for solar-based calendar calculations.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/month-surya-nakshatra-list", _panchang_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/month-surya-nakshatra-list", _month_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_month_tithi_list", annotations=TOOL_ANNOTATIONS)
-async def divine_get_month_tithi_list(params: PanchangInput, ctx: Context) -> str:
+async def divine_get_month_tithi_list(params: MonthInput, ctx: Context) -> str:
     """Get daily tithi list for a given month.
 
     Returns the tithi for each day of the specified month with
     start/end times, paksha, and associated details.
     """
     api_key, auth_token = _get_credentials(ctx)
-    return await _call_divine_api("/indian-api/v1/month-tithi-list", _panchang_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api("/indian-api/v1/month-tithi-list", _month_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
 
 
 # ──────────────────────────────────────────────

@@ -1,5 +1,69 @@
 # Changelog
 
+## [Unreleased] - 2026-07-08
+
+Param-parity fix batch. Every change below was verified against the live
+backend with curl before coding, and every changed tool passed a live
+functional test after coding (28/28).
+
+### Fixed
+
+**`divine_get_samvath` renamed to `divine_get_samvat` (BREAKING, but the old
+tool never worked).** The tool called `/indian-api/v1/find-samvath`, which does
+not exist (HTTP 404 on every call). The live endpoint is
+`/indian-api/v1/find-samvat`. Endpoint and tool name corrected.
+
+**`divine_get_bhava_kundli` selector fixed (BREAKING, but the old tool never
+worked).** The tool sent chart ids like `D1`/`chalit`, which the endpoint
+rejects with "Please enter valid chart id." on every call. The endpoint accepts
+only numeric chart ids `1`-`12`; the schema and validation now reflect that.
+
+**`divine_find_festival` rewired.** It sent a date payload the endpoint
+ignores; the endpoint requires a `festival` name identifier (e.g.
+`maha_shivratri`) plus year and location, and errored on every previous call.
+New signature: `festival` + FestivalInput.
+
+**`divine_get_uday_lagna` no longer demands birth details.** The endpoint is
+date+place scoped; full_name/gender/hour/min/sec are ignored by the API
+(byte-identical responses). They remain accepted as deprecated optional inputs
+for backward compatibility but are not sent upstream.
+
+**Monthly list tools no longer demand `day`.** chandramasa_list,
+month_nakshatra_list, month_sunrise_sunset_list, month_surya_nakshatra_list,
+month_tithi_list are month-scoped; `day` and `lan` have no effect on
+astroapi-8 (verified byte-identical). New `MonthInput` model: day/lan accepted
+as deprecated optional inputs, not sent upstream.
+
+**`divine_get_chandrashtama` is month-scoped with a real optional `day`.**
+`day` narrows results to one date (verified: output changes); it is now
+optional instead of required. `lan` is real and kept.
+
+### Added
+
+**`node_type` on 7 tools** (planetary_positions, kaal_sarpa_yoga,
+kp_planetary_positions, kp_planetary_sub, kp_cuspal_significator,
+jaimini_karakamsha_lagna, jaimini_planetary_positions): optional
+`meannode`/`truenode` Rahu-Ketu calculation selector. The API parses and
+validates it on all 7 endpoints.
+
+**`month_type` on chandramasa**: optional `amanta`/`purnimanta` lunar month
+system selector (verified: changes output, API validates values).
+
+**Chart styling params** (`chart_type`, `chart_color`, `line_color`,
+`planet_color`, `sign_color`, plus `show_planet_degree`/`show_planet_retro`/
+`show_modern_planets` where the endpoint supports them) on horoscope_chart,
+bhava_kundli, sub_planet_chart, kundli_transit_ascendant, kundli_transit_moon.
+**`transit_hour`/`transit_min`/`transit_sec`** on both kundli-transit tools
+(verified: changes output).
+
+**`nakshatra_pada` on month_nakshatra_list**: optional flag to include pada
+details (verified: changes output).
+
+### Docs
+
+README tool tables: count corrected to 81, malayalam/tamil festival tools
+added, renamed samvat row, refreshed descriptions of the fixed tools.
+
 ## [Unreleased] - 2026-07-07
 
 ### Added
