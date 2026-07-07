@@ -4,6 +4,12 @@
 
 ### Added
 
+**New tool: `divine_get_tamil_festivals`.**
+Wraps `POST /indian-api/v1/tamil-festivals` (astroapi-3). Returns major Tamil
+festivals (Thai Pongal, Puthandu, Karthigai Deepam, Vaikuntha Ekadashi, etc.)
+for a given year and location. Params: year, place, lat, lon, tzone.
+Verified against the live endpoint before adding.
+
 **New tool: `divine_get_malayalam_festivals`.**
 Wraps `POST /indian-api/v1/malayalam-festivals` (astroapi-3). Returns major
 Kerala festivals (Vishu Kani, Onam, Thrissur Pooram, Guruvayur Ekadashi, etc.)
