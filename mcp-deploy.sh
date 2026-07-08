@@ -180,14 +180,14 @@ case $CHOICE in
         deploy_mcp "Indian Astrology" "indian-astrology" "divineapi_indian_astrology_mcp" "DivineAPI/mcp-indian-astrology" "8001" "$SCRIPT_DIR"
         ;;
     2)
-        deploy_mcp "Western Astrology" "western-astrology" "divineapi_western_astrology_mcp" "DivineAPI/mcp-western-astrology-" "8002" ""
+        deploy_mcp "Western Astrology" "western-astrology" "divineapi_western_astrology_mcp" "DivineAPI/mcp-western-astrology" "8002" ""
         ;;
     3)
         deploy_mcp "Horoscope & Numerology" "horoscope-numerology" "divineapi_horoscope_numerology_mcp" "DivineAPI/mcp-horoscope-numerology" "8003" ""
         ;;
     4)
         deploy_mcp "Indian Astrology" "indian-astrology" "divineapi_indian_astrology_mcp" "DivineAPI/mcp-indian-astrology" "8001" "$SCRIPT_DIR"
-        deploy_mcp "Western Astrology" "western-astrology" "divineapi_western_astrology_mcp" "DivineAPI/mcp-western-astrology-" "8002" ""
+        deploy_mcp "Western Astrology" "western-astrology" "divineapi_western_astrology_mcp" "DivineAPI/mcp-western-astrology" "8002" ""
         deploy_mcp "Horoscope & Numerology" "horoscope-numerology" "divineapi_horoscope_numerology_mcp" "DivineAPI/mcp-horoscope-numerology" "8003" ""
         ;;
     *)
