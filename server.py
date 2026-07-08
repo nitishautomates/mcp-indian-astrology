@@ -2122,6 +2122,237 @@ async def divine_get_month_tithi_list(params: MonthInput, ctx: Context) -> str:
     return await _call_divine_api("/indian-api/v1/month-tithi-list", _month_payload(params), API_HOST_8, api_key=api_key, auth_token=auth_token)
 
 
+
+# ══════════════════════════════════════════════
+# LAL KITAB - astroapi-3.divineapi.com
+# ══════════════════════════════════════════════
+
+
+@mcp.tool(name="divine_get_lal_kitab_planetary_positions", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_planetary_positions(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab planetary positions for a birth chart.
+
+    Returns planet placements per the Lal Kitab system, the foundation
+    for Lal Kitab analysis and remedies.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/planetary-positions", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_horoscope_chart", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_horoscope_chart(params: KundliInput, ctx: Context) -> str:
+    """Generate the Lal Kitab horoscope chart for a birth chart.
+
+    Returns the Lal Kitab style chart with planet placements as SVG and image.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/horoscope-chart", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_house_position", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_house_position(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab house positions for a birth chart.
+
+    Returns which planets occupy each of the 12 houses in the
+    Lal Kitab system.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/house-position", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_conjunctions", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_conjunctions(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab planetary conjunctions for a birth chart.
+
+    Returns the planet combinations present in the chart and their
+    Lal Kitab interpretation.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/conjunctions", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_teva", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_teva(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab teva (chart conditions) for a birth chart.
+
+    Returns which of the Lal Kitab tevas apply to the chart and what
+    each condition means.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/teva", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_planet_analysis", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_planet_analysis(
+    analysis_planet: str = Field(..., description="Planet to analyze: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, or ketu"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get Lal Kitab analysis of one planet in the birth chart.
+
+    Returns the Lal Kitab interpretation of the selected planet's
+    placement, including its condition and effects.
+    """
+    planet = analysis_planet.lower().strip()
+    if planet not in VALID_PLANETS:
+        return f"Error: Invalid analysis_planet '{analysis_planet}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "analysis_planet": planet}
+    return await _call_divine_api("/indian-api/v1/lal-kitab/planet-analysis", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_dasha", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_dasha(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab dasha periods for a birth chart.
+
+    Returns the Lal Kitab dasha timeline (35-year cycle) with the
+    ruling planet for each period.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/dasha", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_planet_types", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_planet_types(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab planet types for a birth chart.
+
+    Classifies each planet per Lal Kitab (e.g. benefic, malefic,
+    sleeping, exalted conditions) for the given chart.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/planet-types", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_mahadasha_content", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_mahadasha_content(
+    maha_dasha: str = Field(..., description="Mahadasha planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, or ketu"),
+    lan: str = Field(default="en", description="Language code (default 'en')"),
+    ctx: Context = None,
+) -> str:
+    """Get textual Lal Kitab interpretation of a Mahadasha period (no birth data needed).
+
+    Returns the Lal Kitab reading for the named Mahadasha planet.
+    """
+    planet = maha_dasha.lower().strip()
+    if planet not in VALID_PLANETS:
+        return f"Error: Invalid maha_dasha '{maha_dasha}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/mahadasha-content", {"maha_dasha": planet, "lan": lan}, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_antardasha_content", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_antardasha_content(
+    maha_dasha: str = Field(..., description="Mahadasha planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, or ketu"),
+    antar_dasha: str = Field(..., description="Antardasha planet. Must be a valid antardasha for the chosen mahadasha in the Lal Kitab sequence; on a mismatch the API replies with the valid options (e.g. for saturn: rahu, mercury, saturn)"),
+    lan: str = Field(default="en", description="Language code (default 'en')"),
+    ctx: Context = None,
+) -> str:
+    """Get textual Lal Kitab interpretation of a Mahadasha-Antardasha combination (no birth data needed).
+
+    Returns the Lal Kitab reading for the named period pair. Not every
+    planet pair is valid; the API lists the valid antardashas on mismatch.
+    """
+    md = maha_dasha.lower().strip()
+    ad = antar_dasha.lower().strip()
+    for label, val in (("maha_dasha", md), ("antar_dasha", ad)):
+        if val not in VALID_PLANETS:
+            return f"Error: Invalid {label} '{val}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/antardasha-content", {"maha_dasha": md, "antar_dasha": ad, "lan": lan}, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_debts", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_debts(params: KundliInput, ctx: Context) -> str:
+    """Get Lal Kitab debts (rin) for a birth chart.
+
+    Returns the karmic debts identified in the chart per Lal Kitab,
+    such as self, mother, relative or unborn debts.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/lal-kitab/debts", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_house_signification", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_house_signification(
+    house_no: str = Field(..., description="House number: '1' through '12'"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Lal Kitab signification of one house for a birth chart.
+
+    Returns what the selected house (1-12) signifies per Lal Kitab and
+    how it plays out in the given chart.
+    """
+    hn = house_no.strip()
+    if hn not in VALID_BHAVA_CHART_IDS:
+        return f"Error: Invalid house_no '{house_no}'. Must be a number from 1 to 12."
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "house_no": hn}
+    return await _call_divine_api("/indian-api/v1/lal-kitab/house-signification", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_varsha_pravesh", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_varsha_pravesh(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2026')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Lal Kitab Varsha Pravesh (annual chart entry) for a chosen year.
+
+    Returns the moment the varshphal year begins for the native and the
+    entry chart details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/lal-kitab/varshphal/varsha-pravesh", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_varshphal_planetary_positions", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_varshphal_planetary_positions(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2026')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get Lal Kitab varshphal (annual chart) planetary positions for a chosen year.
+
+    Returns the planet placements in the annual chart for the given year.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/lal-kitab/varshphal/planetary-positions", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_varshphal_muntha", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_varshphal_muntha(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2026')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Lal Kitab varshphal Muntha for a chosen year.
+
+    Returns the Muntha house and its interpretation for the native's
+    annual chart.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/lal-kitab/varshphal/muntha", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_lal_kitab_varshphal_chart", annotations=TOOL_ANNOTATIONS)
+async def divine_get_lal_kitab_varshphal_chart(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2026')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Generate the Lal Kitab varshphal (annual) chart for a chosen year.
+
+    Returns the annual chart as SVG and image for the given year.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/lal-kitab/varshphal/chart", payload, api_key=api_key, auth_token=auth_token)
+
+
 # ──────────────────────────────────────────────
 # OAuth Login Form — /divine-login
 # ──────────────────────────────────────────────

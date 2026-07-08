@@ -93,7 +93,7 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (81 Total)
+## 📋 Available Tools (97 Total)
 
 ### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
@@ -240,6 +240,28 @@ claude mcp add divine-indian-astrology \
 | `divine_get_festivals_by_month` | Get all Hindu festivals for a specific Hindu calendar month |
 | `divine_get_malayalam_festivals` | Get major Malayalam (Kerala) festivals for a year |
 | `divine_get_tamil_festivals` | Get major Tamil festivals for a year |
+
+
+### 📕 Lal Kitab — 16 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_lal_kitab_planetary_positions` | Get Lal Kitab planetary positions for a birth chart |
+| `divine_get_lal_kitab_horoscope_chart` | Generate the Lal Kitab horoscope chart for a birth chart |
+| `divine_get_lal_kitab_house_position` | Get Lal Kitab house positions for a birth chart |
+| `divine_get_lal_kitab_conjunctions` | Get Lal Kitab planetary conjunctions for a birth chart |
+| `divine_get_lal_kitab_teva` | Get Lal Kitab teva (chart conditions) for a birth chart |
+| `divine_get_lal_kitab_planet_analysis` | Get Lal Kitab analysis of one planet in the birth chart |
+| `divine_get_lal_kitab_dasha` | Get Lal Kitab dasha periods for a birth chart |
+| `divine_get_lal_kitab_planet_types` | Get Lal Kitab planet types for a birth chart |
+| `divine_get_lal_kitab_mahadasha_content` | Get textual Lal Kitab interpretation of a Mahadasha period |
+| `divine_get_lal_kitab_antardasha_content` | Get textual Lal Kitab interpretation of a Mahadasha-Antardasha combination |
+| `divine_get_lal_kitab_debts` | Get Lal Kitab debts (rin) for a birth chart |
+| `divine_get_lal_kitab_house_signification` | Get the Lal Kitab signification of one house for a birth chart |
+| `divine_get_lal_kitab_varsha_pravesh` | Get the Lal Kitab Varsha Pravesh (annual chart entry) for a chosen year |
+| `divine_get_lal_kitab_varshphal_planetary_positions` | Get Lal Kitab varshphal (annual chart) planetary positions |
+| `divine_get_lal_kitab_varshphal_muntha` | Get the Lal Kitab varshphal Muntha for a chosen year |
+| `divine_get_lal_kitab_varshphal_chart` | Generate the Lal Kitab varshphal (annual) chart for a chosen year |
 
 ### 📅 Monthly Lists — 5 Tools
 

@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.3.0] - 2026-07-08
+
+### Added
+
+**Lal Kitab suite: 16 new tools.** Wraps the new /indian-api/v1/lal-kitab/*
+endpoints (astroapi-3): planetary positions, horoscope chart, house position,
+conjunctions, teva, planet analysis (selector), dasha, planet types,
+mahadasha/antardasha content (text readings, no birth data; the antardasha
+pair must be valid for the mahadasha and the API guides on mismatch), debts,
+house signification (house_no 1-12), and the four varshphal (annual chart)
+tools taking varshphal_year. Every endpoint live-verified before adding and
+every tool live-tested after (18/18 scenarios). Tool count: 81 -> 97.
+
 ## [2.2.1] - 2026-07-08
 
 ### Fixed
