@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.4.0] - 2026-07-08
+
+### Added
+
+**New tool: `divine_get_sankranti_festivals`.** Wraps
+`POST /indian-api/v1/sankranti-festivals` (astroapi-3). Returns the twelve solar
+Sankranti transitions (Makar, Kumbha, Meena, Mesha, etc.) for a year with dates,
+transition moments, and punya kala windows. Params: year, place, lat, lon, tzone.
+Verified live before adding and live-tested after. Tool count: 97 -> 98.
+
 ## [2.3.0] - 2026-07-08
 
 ### Added

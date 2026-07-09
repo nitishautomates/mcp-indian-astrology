@@ -93,7 +93,7 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (97 Total)
+## 📋 Available Tools (98 Total)
 
 ### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
@@ -230,7 +230,7 @@ claude mcp add divine-indian-astrology \
 | `divine_get_matching_vimshottari_dasha` | Get Vimshottari Dasha for both persons in matchmaking |
 | `divine_get_matching_planetary_positions` | Get planetary positions for both persons in matchmaking |
 
-### 🎉 Festivals — 6 Tools
+### 🎉 Festivals — 7 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -240,6 +240,7 @@ claude mcp add divine-indian-astrology \
 | `divine_get_festivals_by_month` | Get all Hindu festivals for a specific Hindu calendar month |
 | `divine_get_malayalam_festivals` | Get major Malayalam (Kerala) festivals for a year |
 | `divine_get_tamil_festivals` | Get major Tamil festivals for a year |
+| `divine_get_sankranti_festivals` | Get the twelve solar Sankranti festivals for a year |
 
 
 ### 📕 Lal Kitab — 16 Tools

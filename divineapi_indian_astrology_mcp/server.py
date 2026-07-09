@@ -2016,6 +2016,26 @@ async def divine_get_tamil_festivals(
     return await _call_divine_api("/indian-api/v1/tamil-festivals", payload, api_key=api_key, auth_token=auth_token)
 
 
+@mcp.tool(name="divine_get_sankranti_festivals", annotations=TOOL_ANNOTATIONS)
+async def divine_get_sankranti_festivals(
+    year: str = Field(..., description="Year (e.g., '2027')"),
+    place: str = Field(..., description="Place name (e.g., 'New Delhi')"),
+    lat: str = Field(..., description="Latitude (e.g., '28.6139')"),
+    lon: str = Field(..., description="Longitude (e.g., '77.2090')"),
+    tzone: str = Field(..., description="Timezone offset (e.g., '5.5')"),
+    ctx: Context = None,
+) -> str:
+    """Get Sankranti festivals for a year.
+
+    Returns the twelve solar Sankranti transitions (Makar, Kumbha, Meena,
+    Mesha, and so on) with dates, transition moments, and punya kala
+    (auspicious) windows.
+    """
+    payload = {"year": year, "place": place, "lat": lat, "lon": lon, "tzone": tzone}
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/sankranti-festivals", payload, api_key=api_key, auth_token=auth_token)
+
+
 @mcp.tool(name="divine_get_festivals_by_month", annotations=TOOL_ANNOTATIONS)
 async def divine_get_festivals_by_month(
     hindu_month: str = Field(..., description="Hindu month: margashirsha, pausha, magha, phalguna, chaitra, vaishakha, jyeshtha, ashadha, shravana, bhadrapada, ashvina, kartika"),
