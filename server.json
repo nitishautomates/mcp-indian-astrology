@@ -3,7 +3,7 @@
   "name": "com.divineapi/indian",
   "title": "Divine API - Indian / Vedic Astrology",
   "description": "Official Divine API MCP for Indian/Vedic Astrology: Panchang, Kundli, Dasha, KP, Lal Kitab.",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "remotes": [
     {
       "type": "streamable-http",
