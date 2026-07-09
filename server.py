@@ -184,8 +184,17 @@ if _TRANSPORT == "http":
         required_scopes=[],
     )
 
+_SERVER_INSTRUCTIONS = """DivineAPI Indian (Vedic) astrology: Panchang, Kundli, Dasha, KP, Jaimini, Lal Kitab, and festivals.
+
+Input conventions: send dates as separate day, month, year fields (plus hour, min, sec for birth charts); place is a plain city string (the form key is lowercase 'place'); lat and lon are decimals; tzone is a decimal UTC offset (e.g. 5.5 for IST). Birth-chart tools need full birth details; panchang and festival tools need only date and place.
+
+Chaining: call divine_get_vimshottari_dasha to find the active dasha periods, then interpret a period with divine_get_maha_dasha_analysis, divine_get_antar_dasha_analysis, or divine_get_pratyantar_dasha_analysis (those need no birth data). The Lal Kitab mahadasha and antardasha content tools pair up (the antardasha must be valid for its mahadasha).
+
+Output: chart tools return an SVG plus a base64 image. Failures come back as errors (isError true) with the accepted values listed, so on a validation error, correct the input and retry."""
+
 mcp = FastMCP(
     "divineapi_indian_astrology_mcp",
+    instructions=_SERVER_INSTRUCTIONS,
     stateless_http=(_TRANSPORT == "http"),
     transport_security=_transport_security,
     auth=_auth_settings,
@@ -1135,6 +1144,9 @@ async def divine_get_vimshottari_dasha(
 
     The most widely used dasha system. Pick `dasha_type` to drill from Maha down
     to Deha. For Prana/Deha, also specify the parent planet(s).
+    To interpret a running period in prose, pass its planet(s) to
+    divine_get_maha_dasha_analysis, divine_get_antar_dasha_analysis, or
+    divine_get_pratyantar_dasha_analysis (those need no birth data).
     """
     dt = dasha_type.lower().strip()
     if dt not in VALID_DASHA_TYPES:
@@ -2251,7 +2263,10 @@ async def divine_get_lal_kitab_mahadasha_content(
 ) -> str:
     """Get textual Lal Kitab interpretation of a Mahadasha period (no birth data needed).
 
-    Returns the Lal Kitab reading for the named Mahadasha planet.
+    Returns the Lal Kitab reading for the named Mahadasha planet. For the
+    sub-period reading, pair with divine_get_lal_kitab_antardasha_content
+    (the antardasha must be valid for this mahadasha; that tool lists the
+    valid options on a mismatch).
     """
     planet = maha_dasha.lower().strip()
     if planet not in VALID_PLANETS:

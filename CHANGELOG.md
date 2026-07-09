@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.4.1] - 2026-07-08
+
+### Added
+
+Add server-level instructions (how-to-use note read at connect) and dasha-chain hints (vimshottari to the dasha-analysis tools, lal-kitab mahadasha to antardasha).
+
 ## [2.4.0] - 2026-07-08
 
 ### Added
