@@ -93,7 +93,7 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (98 Total)
+## 📋 Available Tools (104 Total)
 
 ### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
@@ -263,6 +263,17 @@ claude mcp add divine-indian-astrology \
 | `divine_get_lal_kitab_varshphal_planetary_positions` | Get Lal Kitab varshphal (annual chart) planetary positions |
 | `divine_get_lal_kitab_varshphal_muntha` | Get the Lal Kitab varshphal Muntha for a chosen year |
 | `divine_get_lal_kitab_varshphal_chart` | Generate the Lal Kitab varshphal (annual) chart for a chosen year |
+
+### 🧭 Kundli Analysis (Vargottama, Bhava & Remedies) — 6 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_vargottama_planets` | Get the vargottama planets (same sign in the D1 and D9 charts) for a birth chart |
+| `divine_get_bhav_bala` | Get Bhava Bala (numeric strength of each of the twelve houses) for a birth chart |
+| `divine_get_shani_ashtam_shani` | Get the Ashtama Shani analysis (Saturn in the 8th from natal Saturn) for a birth chart |
+| `divine_get_bhava_analysis` | Get the house-by-house analysis (sign, lord, occupants, aspects) for a birth chart |
+| `divine_get_bhava_group_predictions` | Get predictions grouped by house category (kendra, trikone, trishadaya, trik, maraka, dhana) |
+| `divine_get_planet_remedies` | Get remedial measures (donation, gemstone, lifestyle, mantra) for one planet's placement |
 
 ### 📅 Monthly Lists — 5 Tools
 

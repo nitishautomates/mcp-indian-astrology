@@ -2389,6 +2389,91 @@ async def divine_get_lal_kitab_varshphal_chart(
 
 
 # ──────────────────────────────────────────────
+# Kundli - Vargottama, Bhava strength & Remedies
+# ──────────────────────────────────────────────
+
+
+@mcp.tool(name="divine_get_vargottama_planets", annotations=TOOL_ANNOTATIONS)
+async def divine_get_vargottama_planets(params: KundliInput, ctx: Context) -> str:
+    """Get the vargottama planets for a birth chart.
+
+    Returns each planet with its D1 (birth) and D9 (navamsha) sign and
+    whether it is vargottama (the same sign in both charts), a placement
+    that is considered a source of strength.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/vargottama-planets", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_bhav_bala", annotations=TOOL_ANNOTATIONS)
+async def divine_get_bhav_bala(params: KundliInput, ctx: Context) -> str:
+    """Get Bhava Bala (house strength) for a birth chart.
+
+    Returns the numeric strength of each of the twelve houses, including
+    the house-lord strength (bhavadhipati bala) and the directional
+    strength (disha bala).
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/bhav-bala", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_shani_ashtam_shani", annotations=TOOL_ANNOTATIONS)
+async def divine_get_shani_ashtam_shani(params: KundliInput, ctx: Context) -> str:
+    """Get the Ashtama Shani (shani ashtam shani) analysis for a birth chart.
+
+    Returns the periods when transiting Saturn occupies the eighth house
+    from natal Saturn, together with the natal Saturn placement, the
+    ashtama sign and age-banded predictive content.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/shani-ashtam-shani", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_bhava_analysis", annotations=TOOL_ANNOTATIONS)
+async def divine_get_bhava_analysis(params: KundliInput, ctx: Context) -> str:
+    """Get the house-by-house (bhava) analysis for a birth chart.
+
+    For each of the twelve houses, returns the sign, the house lord and
+    its placement, the occupying planets and the aspects received, each
+    with interpretive content.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/bhava-analysis", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_bhava_group_predictions", annotations=TOOL_ANNOTATIONS)
+async def divine_get_bhava_group_predictions(params: KundliInput, ctx: Context) -> str:
+    """Get predictions grouped by house category for a birth chart.
+
+    Returns interpretations for the classical house groups: kendra
+    (angular), trikone (trinal), trishadaya, trik (dusthana), maraka
+    and dhana.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/bhava-group-predictions", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_planet_remedies", annotations=TOOL_ANNOTATIONS)
+async def divine_get_planet_remedies(
+    analysis_planet: str = Field(..., description="Planet to analyze: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, or ketu"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get remedial measures for one planet's placement in the birth chart.
+
+    For the selected planet, returns the recommended donation, gemstone,
+    lifestyle practice and mantra, plus the weaknesses the remedy
+    addresses.
+    """
+    planet = analysis_planet.lower().strip()
+    if planet not in VALID_PLANETS:
+        return f"Error: Invalid analysis_planet '{analysis_planet}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "analysis_planet": planet}
+    return await _call_divine_api("/indian-api/v1/planet-remedies", payload, api_key=api_key, auth_token=auth_token)
+
+
+# ──────────────────────────────────────────────
 # OAuth Login Form — /divine-login
 # ──────────────────────────────────────────────
 

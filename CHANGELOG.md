@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.5.0] - 2026-07-10
+
+### Added
+
+**6 new Kundli analysis tools** wrapping new `/indian-api/v1/*` endpoints (astroapi-3):
+`divine_get_vargottama_planets` (planets sharing the D1 and D9 sign),
+`divine_get_bhav_bala` (numeric strength of the twelve houses: bhavadhipati and disha bala),
+`divine_get_shani_ashtam_shani` (Ashtama Shani: Saturn transiting the 8th from natal Saturn, with age-banded content),
+`divine_get_bhava_analysis` (house-by-house sign/lord/occupants/aspects), and
+`divine_get_bhava_group_predictions` (predictions grouped by kendra/trikone/trishadaya/trik/maraka/dhana) take the standard birth details.
+`divine_get_planet_remedies` adds an `analysis_planet` selector (sun..ketu) and returns donation, gemstone, lifestyle, mantra and the weaknesses addressed.
+Every endpoint live-verified before adding and every tool live-tested after. Tool count: 98 -> 104.
+
 ## [2.4.1] - 2026-07-08
 
 ### Added
