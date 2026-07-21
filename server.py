@@ -276,6 +276,16 @@ VALID_PLANETS = {
     "venus", "saturn", "rahu", "ketu",
 }
 
+# Grah Gochar (planet transit) additionally accepts the three outer planets.
+# The Vedic dasha / analysis tools do NOT use them, so this is kept separate
+# from VALID_PLANETS (which stays the 9 grahas) to avoid loosening those tools.
+VALID_TRANSIT_PLANETS = VALID_PLANETS | {"uranus", "neptune", "pluto"}
+
+# planet-nakshatra-transit works for the classical + outer planets, but the
+# backend returns HTTP 500 for the nodes (rahu / ketu), so they are excluded
+# here (live-verified 2026-07-21). Differs from grah gochar, which takes all 12.
+VALID_NAKSHATRA_TRANSIT_PLANETS = VALID_TRANSIT_PLANETS - {"rahu", "ketu"}
+
 VALID_DASHA_TYPES = {
     "maha-dasha", "antar-dasha", "pratyantar-dasha",
     "sookshma-dasha", "prana-dasha", "deha-dasha",
@@ -1688,7 +1698,7 @@ async def divine_get_kundli_transit_moon(
 
 @mcp.tool(name="divine_get_grah_gochar", annotations=TOOL_ANNOTATIONS)
 async def divine_get_grah_gochar(
-    planet: str = Field(..., description="Planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, ketu"),
+    planet: str = Field(..., description="Planet (transit): sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, rahu, ketu"),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -1710,8 +1720,8 @@ async def divine_get_grah_gochar(
     nakshatra transits, and effects on the native.
     """
     planet_lower = planet.lower().strip()
-    if planet_lower not in VALID_PLANETS:
-        return f"Error: Invalid planet '{planet}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    if planet_lower not in VALID_TRANSIT_PLANETS:
+        return f"Error: Invalid planet '{planet}'. Must be one of: {', '.join(sorted(VALID_TRANSIT_PLANETS))}"
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
@@ -1755,7 +1765,7 @@ async def divine_get_planet_combustion_transit(
 
 @mcp.tool(name="divine_get_planet_nakshatra_transit", annotations=TOOL_ANNOTATIONS)
 async def divine_get_planet_nakshatra_transit(
-    planet: str = Field(..., description="Planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, ketu"),
+    planet: str = Field(..., description="Planet (nakshatra transit): sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto. NOT rahu/ketu (the API 500s on the nodes for this endpoint)."),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -1776,13 +1786,16 @@ async def divine_get_planet_nakshatra_transit(
     Returns when the planet enters and exits each nakshatra,
     useful for fine-tuning transit predictions.
     """
+    planet_lower = planet.lower().strip()
+    if planet_lower not in VALID_NAKSHATRA_TRANSIT_PLANETS:
+        return f"Error: Invalid planet '{planet}'. Nakshatra transit supports: {', '.join(sorted(VALID_NAKSHATRA_TRANSIT_PLANETS))} (the nodes rahu and ketu are not supported by this endpoint)."
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
         "hour": hour, "min": min, "sec": sec, "gender": gender,
         "place": place, "lat": lat, "lon": lon, "tzone": tzone, "lan": lan,
     })
-    return await _call_divine_api(f"/indian-api/v2/planet-nakshatra-transit/{planet.lower().strip()}", payload, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api(f"/indian-api/v2/planet-nakshatra-transit/{planet_lower}", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_planet_retrograde_transit", annotations=TOOL_ANNOTATIONS)

@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+`divine_get_grah_gochar` now accepts the three outer planets (uranus, neptune, pluto) in addition to the nine grahas, matching the live API (verified: all 12 planets return success=1). A new `VALID_TRANSIT_PLANETS` set gates this tool only; the shared `VALID_PLANETS` (9 grahas) is unchanged so the Vedic dasha / analysis tools stay restricted. The planet field description now lists all 12.
+
+`divine_get_planet_nakshatra_transit` now validates its planet against `VALID_NAKSHATRA_TRANSIT_PLANETS` (the 10 supported: classical + uranus/neptune/pluto) and rejects rahu/ketu with a clear message. Previously it had no validation and passed the nodes straight through to the backend, which returns HTTP 500 for them (live-verified 2026-07-21). The field description was also corrected: it wrongly listed rahu/ketu and omitted the three outer planets.
+
 ## [2.5.0] - 2026-07-10
 
 ### Added
