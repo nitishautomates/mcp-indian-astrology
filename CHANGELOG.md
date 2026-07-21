@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+**Muhurat Finder API - 9 new tools** wrapping `/indian-api/v1/muhurat/*` (astroapi-3): `divine_get_muhurat_marriage`, `_house_entering`, `_vehicle_purchase`, `_property_purchase`, `_business_start`, `_foundation_laying` (month-scoped: month + location + lan), plus `_do_ghati`, `_hora`, `_jain_pachakkhan` (date-scoped: day + location). Every endpoint live-verified (success=1) before adding. Tool count: 104 -> 113.
+
 ### Fixed
 
 `divine_get_grah_gochar` now accepts the three outer planets (uranus, neptune, pluto) in addition to the nine grahas, matching the live API (verified: all 12 planets return success=1). A new `VALID_TRANSIT_PLANETS` set gates this tool only; the shared `VALID_PLANETS` (9 grahas) is unchanged so the Vedic dasha / analysis tools stay restricted. The planet field description now lists all 12.

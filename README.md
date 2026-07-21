@@ -93,7 +93,7 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (104 Total)
+## 📋 Available Tools (113 Total)
 
 ### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
@@ -125,6 +125,20 @@ claude mcp add divine-indian-astrology \
 | `divine_get_auspicious_timings` | Get auspicious timings (shubh muhurat) for a given date and location |
 | `divine_get_inauspicious_timings` | Get inauspicious timings for a given date and location |
 | `divine_get_gowri_panchangam` | Get the Gowri Panchangam for a given date and location |
+
+### 🕉️ Muhurat Finder - 9 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_muhurat_marriage` | Get the Marriage Muhurat (auspicious wedding dates) for a given month and location |
+| `divine_get_muhurat_house_entering` | Get the Griha Pravesh (house-entering) Muhurat for a given month and location |
+| `divine_get_muhurat_vehicle_purchase` | Get the Vehicle Purchase Muhurat for a given month and location |
+| `divine_get_muhurat_property_purchase` | Get the Property Purchase Muhurat for a given month and location |
+| `divine_get_muhurat_business_start` | Get the Business Start Muhurat for a given month and location |
+| `divine_get_muhurat_foundation_laying` | Get the Foundation Laying (Bhoomi Pujan) Muhurat for a given month and location |
+| `divine_get_muhurat_do_ghati` | Get the Do Ghati Muhurat for a given date and location |
+| `divine_get_muhurat_hora` | Get the Hora (planetary hour) timings for a given date and location |
+| `divine_get_muhurat_jain_pachakkhan` | Get the Jain Pachakkhan timings for a given date and location |
 
 ### 🔮 Kundli (Birth Chart) Basics — 9 Tools
 
