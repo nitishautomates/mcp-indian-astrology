@@ -276,6 +276,16 @@ VALID_PLANETS = {
     "venus", "saturn", "rahu", "ketu",
 }
 
+# Grah Gochar (planet transit) additionally accepts the three outer planets.
+# The Vedic dasha / analysis tools do NOT use them, so this is kept separate
+# from VALID_PLANETS (which stays the 9 grahas) to avoid loosening those tools.
+VALID_TRANSIT_PLANETS = VALID_PLANETS | {"uranus", "neptune", "pluto"}
+
+# planet-nakshatra-transit works for the classical + outer planets, but the
+# backend returns HTTP 500 for the nodes (rahu / ketu), so they are excluded
+# here (live-verified 2026-07-21). Differs from grah gochar, which takes all 12.
+VALID_NAKSHATRA_TRANSIT_PLANETS = VALID_TRANSIT_PLANETS - {"rahu", "ketu"}
+
 VALID_DASHA_TYPES = {
     "maha-dasha", "antar-dasha", "pratyantar-dasha",
     "sookshma-dasha", "prana-dasha", "deha-dasha",
@@ -1688,7 +1698,7 @@ async def divine_get_kundli_transit_moon(
 
 @mcp.tool(name="divine_get_grah_gochar", annotations=TOOL_ANNOTATIONS)
 async def divine_get_grah_gochar(
-    planet: str = Field(..., description="Planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, ketu"),
+    planet: str = Field(..., description="Planet (transit): sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto, rahu, ketu"),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -1710,8 +1720,8 @@ async def divine_get_grah_gochar(
     nakshatra transits, and effects on the native.
     """
     planet_lower = planet.lower().strip()
-    if planet_lower not in VALID_PLANETS:
-        return f"Error: Invalid planet '{planet}'. Must be one of: {', '.join(sorted(VALID_PLANETS))}"
+    if planet_lower not in VALID_TRANSIT_PLANETS:
+        return f"Error: Invalid planet '{planet}'. Must be one of: {', '.join(sorted(VALID_TRANSIT_PLANETS))}"
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
@@ -1755,7 +1765,7 @@ async def divine_get_planet_combustion_transit(
 
 @mcp.tool(name="divine_get_planet_nakshatra_transit", annotations=TOOL_ANNOTATIONS)
 async def divine_get_planet_nakshatra_transit(
-    planet: str = Field(..., description="Planet: sun, moon, mars, mercury, jupiter, venus, saturn, rahu, ketu"),
+    planet: str = Field(..., description="Planet (nakshatra transit): sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto. Not rahu/ketu (not currently supported for this endpoint; may be added later)."),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -1776,13 +1786,16 @@ async def divine_get_planet_nakshatra_transit(
     Returns when the planet enters and exits each nakshatra,
     useful for fine-tuning transit predictions.
     """
+    planet_lower = planet.lower().strip()
+    if planet_lower not in VALID_NAKSHATRA_TRANSIT_PLANETS:
+        return f"Error: Invalid planet '{planet}'. Nakshatra transit supports: {', '.join(sorted(VALID_NAKSHATRA_TRANSIT_PLANETS))} (the nodes rahu and ketu are not currently supported by this endpoint; may be added later)."
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
         "hour": hour, "min": min, "sec": sec, "gender": gender,
         "place": place, "lat": lat, "lon": lon, "tzone": tzone, "lan": lan,
     })
-    return await _call_divine_api(f"/indian-api/v2/planet-nakshatra-transit/{planet.lower().strip()}", payload, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api(f"/indian-api/v2/planet-nakshatra-transit/{planet_lower}", payload, api_key=api_key, auth_token=auth_token)
 
 
 @mcp.tool(name="divine_get_planet_retrograde_transit", annotations=TOOL_ANNOTATIONS)
@@ -2657,6 +2670,113 @@ def create_http_app():
     )
     return ApiKeyToJwtMiddleware(app, _JWT_SECRET)
 
+
+
+# ──────────────────────────────────────────────
+# Muhurat Finder API (astroapi-3) - 9 tools
+# ──────────────────────────────────────────────
+
+class MuhuratMonthInput(BaseModel):
+    """Input for month-scoped Muhurat Finder APIs (month + location + language)."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True, extra="forbid")
+
+    month: str = Field(..., description="Month number (e.g., '05' for May)", min_length=1, max_length=2)
+    year: str = Field(..., description="Year (e.g., '2025')", min_length=4, max_length=4)
+    place: str = Field(..., description="Place name (e.g., 'New Delhi')", min_length=1, max_length=200)
+    lat: str = Field(..., description="Latitude of the place (e.g., '28.6139')")
+    lon: str = Field(..., description="Longitude of the place (e.g., '77.2090')")
+    tzone: str = Field(..., description="Timezone offset from UTC (e.g., '5.5' for IST)")
+    lan: str = Field(default="en", description="Language code for the response (default 'en').")
+
+
+def _muhurat_month_payload(params: "MuhuratMonthInput") -> dict:
+    return {
+        "month": params.month, "year": params.year, "place": params.place,
+        "lat": params.lat, "lon": params.lon, "tzone": params.tzone, "lan": params.lan,
+    }
+
+
+@mcp.tool(name="divine_get_muhurat_marriage", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_marriage(params: MuhuratMonthInput, ctx: Context) -> str:
+    """Get the Marriage Muhurat (auspicious wedding dates) for a given month and location.
+
+    Returns auspicious dates in the month with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/marriage", _muhurat_month_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_house_entering", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_house_entering(params: MuhuratMonthInput, ctx: Context) -> str:
+    """Get the Griha Pravesh (house-entering) Muhurat for a given month and location.
+
+    Returns auspicious dates in the month with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/house-entering", _muhurat_month_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_vehicle_purchase", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_vehicle_purchase(params: MuhuratMonthInput, ctx: Context) -> str:
+    """Get the Vehicle Purchase Muhurat for a given month and location.
+
+    Returns auspicious dates in the month with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/vehicle-purchase", _muhurat_month_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_property_purchase", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_property_purchase(params: MuhuratMonthInput, ctx: Context) -> str:
+    """Get the Property Purchase Muhurat for a given month and location.
+
+    Returns auspicious dates in the month with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/property-purchase", _muhurat_month_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_business_start", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_business_start(params: MuhuratMonthInput, ctx: Context) -> str:
+    """Get the Business Start Muhurat for a given month and location.
+
+    Returns auspicious dates in the month with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/business-start", _muhurat_month_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_foundation_laying", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_foundation_laying(params: MuhuratMonthInput, ctx: Context) -> str:
+    """Get the Foundation Laying (Bhoomi Pujan) Muhurat for a given month and location.
+
+    Returns auspicious dates in the month with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/foundation-laying", _muhurat_month_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_do_ghati", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_do_ghati(params: PanchangInput, ctx: Context) -> str:
+    """Get the Do Ghati Muhurat for a given date and location.
+
+    Returns auspicious timings for the day with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/do-ghati", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_hora", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_hora(params: PanchangInput, ctx: Context) -> str:
+    """Get the Hora (planetary hour) timings for a given date and location.
+
+    Returns auspicious timings for the day with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/hora", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
+
+@mcp.tool(name="divine_get_muhurat_jain_pachakkhan", annotations=TOOL_ANNOTATIONS)
+async def divine_get_muhurat_jain_pachakkhan(params: PanchangInput, ctx: Context) -> str:
+    """Get the Jain Pachakkhan timings for a given date and location.
+
+    Returns auspicious timings for the day with muhurat details.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/muhurat/jain-pachakkhan", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
 
 # Module-level ASGI app for uvicorn (only created in HTTP mode)
 app = create_http_app() if _TRANSPORT == "http" else None
