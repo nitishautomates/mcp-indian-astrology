@@ -2789,6 +2789,181 @@ async def divine_get_rudraksha_suggestion(params: KundliInput, ctx: Context) -> 
     return await _call_divine_api("/indian-api/v1/rudraksha-suggestion", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
 
 
+
+
+# ──────────────────────────────────────────────
+# Varshphal (Annual Chart / Tajika) API (astroapi-3) - 14 tools
+# ──────────────────────────────────────────────
+
+@mcp.tool(name="divine_get_varshphal_varsha_pravesh", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_varsha_pravesh(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Varsha Pravesh (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/varsha-pravesh", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_basic_astro_details", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_basic_astro_details(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Basic Astro Details (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/basic-astro-details", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_planetary_positions", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_planetary_positions(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Planetary Positions (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/planetary-positions", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_horoscope_chart", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_horoscope_chart(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    chart_id: str = Field("D1", description="Divisional chart id in the URL path: D1 to D60"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal (annual) divisional horoscope chart (D1..D60) as SVG for the given year."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api(f"/indian-api/v1/varshphal/horoscope-chart/{chart_id.strip()}", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_tajika_aspect", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_tajika_aspect(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Tajika Aspect (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/tajika-aspect", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_muntha", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_muntha(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Muntha (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/muntha", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_panchadhikari", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_panchadhikari(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Panchadhikari (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/panchadhikari", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_tri_pataki_chakra", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_tri_pataki_chakra(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Tri Pataki Chakra (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/tri-pataki-chakra", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_mudda_dasha", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_mudda_dasha(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Mudda Dasha (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/mudda-dasha", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_yogini_dasha", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_yogini_dasha(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Yogini Dasha (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/yogini-dasha", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_patyanini_dasha", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_patyanini_dasha(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Patyanini Dasha (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/patyanini-dasha", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_planetary_strengths", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_planetary_strengths(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Planetary Strengths (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/planetary-strengths", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_sahams", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_sahams(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Sahams (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/sahams", payload, api_key=api_key, auth_token=auth_token)
+
+
+@mcp.tool(name="divine_get_varshphal_yogas", annotations=TOOL_ANNOTATIONS)
+async def divine_get_varshphal_yogas(
+    varshphal_year: str = Field(..., description="Year for the annual (varshphal) chart (e.g., '2024')"),
+    params: KundliInput = Field(..., description="Birth details"),
+    ctx: Context = None,
+) -> str:
+    """Get the Varshphal Yogas (annual chart) for the given year and birth data."""
+    api_key, auth_token = _get_credentials(ctx)
+    payload = {**_kundli_payload(params), "varshphal_year": varshphal_year.strip()}
+    return await _call_divine_api("/indian-api/v1/varshphal/yogas", payload, api_key=api_key, auth_token=auth_token)
+
+
 # Module-level ASGI app for uvicorn (only created in HTTP mode)
 app = create_http_app() if _TRANSPORT == "http" else None
 

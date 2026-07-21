@@ -93,7 +93,7 @@ claude mcp add divine-indian-astrology \
 
 ---
 
-## 📋 Available Tools (114 Total)
+## 📋 Available Tools (128 Total)
 
 ### 🗓️ Panchang (Daily Vedic Calendar) — 6 Tools
 
@@ -289,6 +289,25 @@ claude mcp add divine-indian-astrology \
 | `divine_get_bhava_group_predictions` | Get predictions grouped by house category (kendra, trikone, trishadaya, trik, maraka, dhana) |
 | `divine_get_planet_remedies` | Get remedial measures (donation, gemstone, lifestyle, mantra) for one planet's placement |
 | `divine_get_rudraksha_suggestion` | Get Rudraksha (mukhi bead) suggestions (life, lucky, and dasha beads) from birth data |
+
+### 🎂 Varshphal (Annual Chart) - 14 Tools
+
+| Tool | Description |
+|------|-------------|
+| `divine_get_varshphal_varsha_pravesh` | Get the annual solar-return (Varsha Pravesh) moment for the given year |
+| `divine_get_varshphal_basic_astro_details` | Get basic annual-chart astro details for the given year |
+| `divine_get_varshphal_planetary_positions` | Get annual-chart planetary positions for the given year |
+| `divine_get_varshphal_horoscope_chart` | Get the annual divisional chart (D1..D60) as SVG for the given year |
+| `divine_get_varshphal_tajika_aspect` | Get Tajika aspects (ithasala, etc.) for the annual chart |
+| `divine_get_varshphal_muntha` | Get the Muntha (progressed ascendant) for the given year |
+| `divine_get_varshphal_panchadhikari` | Get the Panchadhikari (five year-lords) for the given year |
+| `divine_get_varshphal_tri_pataki_chakra` | Get the Tri Pataki Chakra for the annual chart |
+| `divine_get_varshphal_mudda_dasha` | Get the Mudda Dasha (annual dasha) for the given year |
+| `divine_get_varshphal_yogini_dasha` | Get the annual Yogini Dasha for the given year |
+| `divine_get_varshphal_patyanini_dasha` | Get the Patyanini Dasha for the given year |
+| `divine_get_varshphal_planetary_strengths` | Get annual-chart planetary strengths (harsha bala, pancha vargiya bala) |
+| `divine_get_varshphal_sahams` | Get the Sahams (sensitive points) for the annual chart |
+| `divine_get_varshphal_yogas` | Get Tajika yogas for the annual chart |
 
 ### 📅 Monthly Lists — 5 Tools
 

@@ -4,6 +4,12 @@
 
 ### Added
 
+**Varshphal (annual chart / Tajika) suite - 14 new tools** wrapping `/indian-api/v1/varshphal/*` (astroapi-3): varsha_pravesh, basic_astro_details, planetary_positions, horoscope_chart (D1..D60 chart id in the path), tajika_aspect, muntha, panchadhikari, tri_pataki_chakra, mudda_dasha, yogini_dasha, patyanini_dasha, planetary_strengths, sahams, yogas. Each takes birth details (KundliInput) + `varshphal_year`. Distinct from the existing Lal Kitab varshphal tools (`/lal-kitab/varshphal/*`). All live-verified (success=1). Tool count: 114 -> 128.
+
+## [2.7.0] - 2026-07-21
+
+### Added
+
 **New tool: `divine_get_rudraksha_suggestion`** wrapping `/indian-api/v1/rudraksha-suggestion` (astroapi-3). Takes standard birth details (KundliInput) and returns the recommended life, lucky, and dasha Rudraksha beads. Endpoint live-verified (success=1) before adding. Tool count: 113 -> 114.
 
 ## [2.6.0] - 2026-07-21
