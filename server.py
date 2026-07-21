@@ -1765,7 +1765,7 @@ async def divine_get_planet_combustion_transit(
 
 @mcp.tool(name="divine_get_planet_nakshatra_transit", annotations=TOOL_ANNOTATIONS)
 async def divine_get_planet_nakshatra_transit(
-    planet: str = Field(..., description="Planet (nakshatra transit): sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto. NOT rahu/ketu (the API 500s on the nodes for this endpoint)."),
+    planet: str = Field(..., description="Planet (nakshatra transit): sun, moon, mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto. Not rahu/ketu (not currently supported for this endpoint; may be added later)."),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -1788,7 +1788,7 @@ async def divine_get_planet_nakshatra_transit(
     """
     planet_lower = planet.lower().strip()
     if planet_lower not in VALID_NAKSHATRA_TRANSIT_PLANETS:
-        return f"Error: Invalid planet '{planet}'. Nakshatra transit supports: {', '.join(sorted(VALID_NAKSHATRA_TRANSIT_PLANETS))} (the nodes rahu and ketu are not supported by this endpoint)."
+        return f"Error: Invalid planet '{planet}'. Nakshatra transit supports: {', '.join(sorted(VALID_NAKSHATRA_TRANSIT_PLANETS))} (the nodes rahu and ketu are not currently supported by this endpoint; may be added later)."
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
