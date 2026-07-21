@@ -2778,6 +2778,17 @@ async def divine_get_muhurat_jain_pachakkhan(params: PanchangInput, ctx: Context
     api_key, auth_token = _get_credentials(ctx)
     return await _call_divine_api("/indian-api/v1/muhurat/jain-pachakkhan", _panchang_payload(params), api_key=api_key, auth_token=auth_token)
 
+
+@mcp.tool(name="divine_get_rudraksha_suggestion", annotations=TOOL_ANNOTATIONS)
+async def divine_get_rudraksha_suggestion(params: KundliInput, ctx: Context) -> str:
+    """Get Rudraksha (mukhi bead) suggestions for a person based on their birth data.
+
+    Returns the recommended life, lucky, and dasha Rudraksha beads.
+    """
+    api_key, auth_token = _get_credentials(ctx)
+    return await _call_divine_api("/indian-api/v1/rudraksha-suggestion", _kundli_payload(params), api_key=api_key, auth_token=auth_token)
+
+
 # Module-level ASGI app for uvicorn (only created in HTTP mode)
 app = create_http_app() if _TRANSPORT == "http" else None
 

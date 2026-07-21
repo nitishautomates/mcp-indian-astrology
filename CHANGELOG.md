@@ -4,6 +4,12 @@
 
 ### Added
 
+**New tool: `divine_get_rudraksha_suggestion`** wrapping `/indian-api/v1/rudraksha-suggestion` (astroapi-3). Takes standard birth details (KundliInput) and returns the recommended life, lucky, and dasha Rudraksha beads. Endpoint live-verified (success=1) before adding. Tool count: 113 -> 114.
+
+## [2.6.0] - 2026-07-21
+
+### Added
+
 **Muhurat Finder API - 9 new tools** wrapping `/indian-api/v1/muhurat/*` (astroapi-3): `divine_get_muhurat_marriage`, `_house_entering`, `_vehicle_purchase`, `_property_purchase`, `_business_start`, `_foundation_laying` (month-scoped: month + location + lan), plus `_do_ghati`, `_hora`, `_jain_pachakkhan` (date-scoped: day + location). Every endpoint live-verified (success=1) before adding. Tool count: 104 -> 113.
 
 ### Fixed
