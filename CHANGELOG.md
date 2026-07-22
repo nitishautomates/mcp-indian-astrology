@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fixed
+
+`divine_get_planet_retrograde_transit` now accepts all **8** planets the live API supports (mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto) instead of the 5 it declared, and validates the path selector against a new `VALID_RETROGRADE_PLANETS` set. Previously it under-declared by 3 (uranus/neptune/pluto), blocking valid calls, and had no validation at all, so rahu/ketu were passed through and the backend answered with an unhandled HTTP 500 instead of a clean error. Live-verified 2026-07-22 during the path-selector sweep.
+
+## [2.8.0] - 2026-07-21
+
 ### Added
 
 **Varshphal (annual chart / Tajika) suite - 14 new tools** wrapping `/indian-api/v1/varshphal/*` (astroapi-3): varsha_pravesh, basic_astro_details, planetary_positions, horoscope_chart (D1..D60 chart id in the path), tajika_aspect, muntha, panchadhikari, tri_pataki_chakra, mudda_dasha, yogini_dasha, patyanini_dasha, planetary_strengths, sahams, yogas. Each takes birth details (KundliInput) + `varshphal_year`. Distinct from the existing Lal Kitab varshphal tools (`/lal-kitab/varshphal/*`). All live-verified (success=1). Tool count: 114 -> 128.

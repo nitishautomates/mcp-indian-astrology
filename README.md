@@ -230,7 +230,7 @@ claude mcp add divine-indian-astrology \
 | `divine_get_grah_gochar` | Get Grah Gochar (planetary transit) data for a specific planet |
 | `divine_get_planet_combustion_transit` | Get planet combustion (Asta) transit details for a specific planet |
 | `divine_get_planet_nakshatra_transit` | Get nakshatra transit details for a specific planet |
-| `divine_get_planet_retrograde_transit` | Get retrograde transit details for a specific planet |
+| `divine_get_planet_retrograde_transit` | Get retrograde transit details for a planet (mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto) |
 
 ### 💑 Matchmaking (Kundli Milan) — 7 Tools
 

@@ -286,6 +286,15 @@ VALID_TRANSIT_PLANETS = VALID_PLANETS | {"uranus", "neptune", "pluto"}
 # here (live-verified 2026-07-21). Differs from grah gochar, which takes all 12.
 VALID_NAKSHATRA_TRANSIT_PLANETS = VALID_TRANSIT_PLANETS - {"rahu", "ketu"}
 
+# planet-retrograde-transit supports only bodies that actually have a retrograde
+# phase: the 5 classical + the 3 outer planets (live-verified 2026-07-22; the doc
+# page agrees). Sun and moon never retrograde, and the nodes (rahu / ketu) make the
+# backend raise an unhandled HTTP 500 instead of a clean validation error, so they
+# are gated here rather than passed through.
+VALID_RETROGRADE_PLANETS = {
+    "mercury", "venus", "mars", "jupiter", "saturn", "uranus", "neptune", "pluto",
+}
+
 VALID_DASHA_TYPES = {
     "maha-dasha", "antar-dasha", "pratyantar-dasha",
     "sookshma-dasha", "prana-dasha", "deha-dasha",
@@ -1800,7 +1809,7 @@ async def divine_get_planet_nakshatra_transit(
 
 @mcp.tool(name="divine_get_planet_retrograde_transit", annotations=TOOL_ANNOTATIONS)
 async def divine_get_planet_retrograde_transit(
-    planet: str = Field(..., description="Planet: mars, mercury, jupiter, venus, or saturn"),
+    planet: str = Field(..., description="Planet (retrograde): mercury, venus, mars, jupiter, saturn, uranus, neptune, pluto. Not sun/moon/rahu/ketu (no retrograde phase)."),
     full_name: str = Field(..., description="Full name of the person"),
     day: str = Field(..., description="Birth day (e.g., '24')"),
     month: str = Field(..., description="Birth month (e.g., '05')"),
@@ -1821,13 +1830,16 @@ async def divine_get_planet_retrograde_transit(
     Returns retrograde and direct motion periods for the planet,
     along with their effects on the native.
     """
+    planet_lower = planet.lower().strip()
+    if planet_lower not in VALID_RETROGRADE_PLANETS:
+        return f"Error: Invalid planet '{planet}'. Retrograde transit supports: {', '.join(sorted(VALID_RETROGRADE_PLANETS))} (sun, moon and the nodes rahu/ketu have no retrograde phase and are not supported)."
     api_key, auth_token = _get_credentials(ctx)
     payload = _kundli_params_payload(**{
         "full_name": full_name, "day": day, "month": month, "year": year,
         "hour": hour, "min": min, "sec": sec, "gender": gender,
         "place": place, "lat": lat, "lon": lon, "tzone": tzone, "lan": lan,
     })
-    return await _call_divine_api(f"/indian-api/v2/planet-retrograde-transit/{planet.lower().strip()}", payload, api_key=api_key, auth_token=auth_token)
+    return await _call_divine_api(f"/indian-api/v2/planet-retrograde-transit/{planet_lower}", payload, api_key=api_key, auth_token=auth_token)
 
 
 # ══════════════════════════════════════════════
